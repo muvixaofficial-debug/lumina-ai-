@@ -79,3 +79,36 @@ button:focus-visible,textarea:focus-visible{outline:2px solid #9b9bf9;outline-of
 .tool-copy small{font-size:11px;color:#85868e}
 @media(min-width:700px){.topbar{padding:0 24px}.chat-area{padding-left:24px;padding-right:24px}.composer-wrap{padding-left:24px;padding-right:24px}.welcome h1{font-size:29px}.sidebar{width:320px}}
 @media(max-width:380px){.topbar{gap:9px;padding:0 10px}.brand{font-size:18px}.composer-wrap{padding-left:8px;padding-right:8px}.composer{gap:3px;padding-left:6px}.plus-btn,.mic-btn{width:33px;height:36px}.send-btn,.voice-btn{width:39px;height:39px}.composer textarea{font-size:14px}.welcome h1{font-size:22px}}
+
+
+/* LUMINA AI CHAT CONNECTED STYLES */
+.messages { text-align: left; }
+.message-row { display: flex; width: 100%; margin: 12px 0; }
+.message-row.user-row { justify-content: flex-end; }
+.message-row.assistant-row { justify-content: flex-start; }
+.user-bubble, .assistant-bubble {
+  box-sizing: border-box;
+  max-width: min(86%, 760px);
+  padding: 12px 16px;
+  border-radius: 18px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+  text-align: left;
+}
+.user-bubble {
+  background: #eee3ff;
+  color: #211334;
+  border-bottom-right-radius: 5px;
+}
+.assistant-bubble {
+  background: var(--bg, #fff);
+  color: var(--text-h, #17121f);
+  border: 1px solid var(--border, #e5e4e7);
+  border-bottom-left-radius: 5px;
+}
+.typing-indicator { opacity: .75; font-style: italic; }
+.send-btn:disabled { opacity: .5; cursor: wait; }
+@media (max-width: 600px) {
+  .user-bubble, .assistant-bubble { max-width: 92%; padding: 10px 13px; }
+}

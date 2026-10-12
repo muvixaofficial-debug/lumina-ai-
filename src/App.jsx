@@ -50,6 +50,7 @@ function Waveform() {
 export default function App() {
   const [message,setMessage] = useState('');
   const [messages,setMessages] = useState([]);
+  const [isLoading,setIsLoading] = useState(false);
   const [menu,setMenu] = useState(false);
   const [plus,setPlus] = useState(false);
   const [notice,setNotice] = useState('');
@@ -64,6 +65,7 @@ export default function App() {
   function newChat() {
     if(messages.length) setHistory(old=>[{id:Date.now(),messages:[...messages]},...old]);
     setMessages([]);
+    setIsLoading(false);
     setMessage('');
     setNotice('');
     setMenu(false);
@@ -71,13 +73,57 @@ export default function App() {
     setProfileOpen(false);
   }
 
-  function sendMessage() {
-    const text=message.trim();
-    if(!text) return;
-    setMessages(old=>[...old,{role:'user',text,id:Date.now()}]);
+  async function sendMessage() {
+    const text = message.trim();
+    if (!text || isLoading) return;
+
+    const previousHistory = messages
+      .filter(m => (m.role === 'user' || m.role === 'assistant') && m.text)
+      .slice(-12)
+      .map(m => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        text: m.text
+      }));
+
+    setMessages(old => [...old, {role:'user', text, id:Date.now()}]);
     setMessage('');
-    setNotice('Lumina AI का असली जवाब पाने के लिए AI मॉडल कनेक्ट करना बाकी है।');
+    setNotice('');
     setPlus(false);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(
+        'https://muvixa-lumina-backend-8417.onrender.com/api/chat',
+        {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({message:text, history:previousHistory})
+        }
+      );
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || `सर्वर त्रुटि (${response.status})`);
+      }
+
+      if (typeof data.answer !== 'string' || !data.answer.trim()) {
+        throw new Error('AI से जवाब नहीं मिला। कृपया दोबारा कोशिश करें।');
+      }
+
+      setMessages(old => [
+        ...old,
+        {role:'assistant', text:data.answer.trim(), id:Date.now()+1}
+      ]);
+    } catch (error) {
+      setNotice(
+        error.name === 'TypeError'
+          ? 'इंटरनेट या सर्वर से कनेक्शन नहीं हो पाया। थोड़ी देर बाद दोबारा कोशिश करें।'
+          : (error.message || 'AI से जवाब लेते समय समस्या हुई।')
+      );
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   function chooseTool(tool) {
@@ -172,7 +218,8 @@ export default function App() {
         <h1>What can I help with?</h1>
         <p>मुझसे कुछ भी पूछें।</p>
       </section>:<section className="messages">
-        {messages.map(m=><div className="message-row" key={m.id}><div className="user-bubble">{m.text}</div></div>)}
+        {messages.map(m=><div className={`message-row ${m.role === 'assistant' ? 'assistant-row' : 'user-row'}`} key={m.id}><div className={m.role === 'assistant' ? 'assistant-bubble' : 'user-bubble'}>{m.text}</div></div>)}
+        {isLoading&&<div className="message-row assistant-row"><div className="assistant-bubble typing-indicator">Lumina AI सोच रहा है…</div></div>}
         <div ref={endRef}/>
       </section>}
       {notice&&<div className="notice-inline"><span>{notice}</span><button aria-label="संदेश बंद करें" onClick={()=>setNotice('')}><Icon name="close" size={16}/></button></div>}
@@ -189,7 +236,7 @@ export default function App() {
         <button className="plus-btn" aria-label="टूल जोड़ें" onClick={()=>setPlus(!plus)}><Icon name={plus?'close':'plus'} size={24}/></button>
         <textarea rows="1" value={message} placeholder="Message Lumina AI" aria-label="अपना संदेश लिखें" onChange={e=>setMessage(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}}/>
         <button className={'mic-btn '+(listening?'listening':'')} aria-label="बोलकर लिखें" onClick={voiceInput}><Icon name="mic" size={21}/></button>
-        {message.trim()?<button className="send-btn" aria-label="भेजें" onClick={sendMessage}><Icon name="send" size={22}/></button>:<button className="voice-btn" aria-label="Voice mode" onClick={()=>setNotice('Voice बातचीत चालू करने के लिए AI voice सेवा कनेक्ट करनी होगी।')}><Waveform/></button>}
+        {message.trim()?<button className="send-btn" aria-label="भेजें" disabled={isLoading} onClick={sendMessage}><Icon name="send" size={22}/></button>:<button className="voice-btn" aria-label="Voice mode" onClick={()=>setNotice('Voice बातचीत चालू करने के लिए AI voice सेवा कनेक्ट करनी होगी।')}><Waveform/></button>}
       </div>
       <p className="disclaimer">Lumina AI गलतियाँ कर सकता है। ज़रूरी जानकारी जाँच लें।</p>
       <input ref={fileRef} type="file" accept="image/*,application/pdf,.txt,.doc,.docx" hidden onChange={e=>{const file=e.target.files?.[0];if(file)setNotice('फ़ाइल चुनी गई: '+file.name+'। फ़ाइल पढ़ने की सुविधा जोड़ना बाकी है।');e.target.value='';}}/>
