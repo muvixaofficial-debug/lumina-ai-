@@ -9,3 +9,7 @@ android/local.properties
 !.env.example
 *.jks
 *.keystore
+server/node_modules/
+server/.env
+server/.env.*
+!server/.env.example
