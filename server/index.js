@@ -57,6 +57,16 @@ app.post('/api/chat', async (req, res) => {
       ? req.body.history.slice(-12)
       : [];
 
+    const mode = ['chat', 'coding', 'study'].includes(req.body?.mode)
+      ? req.body.mode
+      : 'chat';
+
+    const modeInstructions = {
+      chat: 'You are Lumina AI, a helpful and honest assistant. Reply in the language used by the user.',
+      coding: 'You are Lumina Coding AI. Help write, explain, debug, and improve code. Give runnable examples when useful, explain errors clearly, and never claim code was tested unless it was actually run. Reply in the user’s language.',
+      study: 'You are Lumina Study AI, a patient tutor. Explain concepts step by step in the user’s language, use examples and practice questions when useful, and do not invent facts.'
+    };
+
     const contents = [];
 
     for (const item of history) {
@@ -83,8 +93,7 @@ app.post('/api/chat', async (req, res) => {
       model: 'gemini-2.5-flash',
       contents,
       config: {
-        systemInstruction:
-          'You are Lumina AI, a helpful and honest assistant. Reply in the language used by the user.'
+        systemInstruction: modeInstructions[mode]
       }
     });
 

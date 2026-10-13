@@ -49,6 +49,7 @@ function Waveform() {
 
 export default function App() {
   const [message,setMessage] = useState('');
+  const [activeMode,setActiveMode] = useState('chat');
   const [messages,setMessages] = useState([]);
   const [isLoading,setIsLoading] = useState(false);
   const [menu,setMenu] = useState(false);
@@ -97,7 +98,7 @@ export default function App() {
         {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({message:text, history:previousHistory})
+          body: JSON.stringify({message:text, history:previousHistory, mode:activeMode})
         }
       );
 
@@ -130,22 +131,41 @@ export default function App() {
     setMenu(false);
     setPlus(false);
     setProfileOpen(false);
-    if(tool.id==='new') return newChat();
-    if(tool.id==='files'||tool.id==='camera') {
-      if(fileRef.current) {
-        fileRef.current.setAttribute('accept','image/*,application/pdf,.txt,.doc,.docx');
-        if(tool.id==='camera') fileRef.current.setAttribute('capture','environment');
+
+    if (tool.id === 'new') return newChat();
+
+    if (tool.id === 'coding' || tool.id === 'study') {
+      setActiveMode(tool.id);
+      setNotice(tool.id === 'coding'
+        ? 'Coding AI चुना गया। अब अपना कोड या प्रोग्रामिंग सवाल लिखें।'
+        : 'Study AI चुना गया। अब अपना विषय या पढ़ाई का सवाल लिखें।');
+      return;
+    }
+
+    if (tool.id === 'files' || tool.id === 'camera') {
+      if (fileRef.current) {
+        fileRef.current.setAttribute('accept', 'image/*,application/pdf,.txt,.doc,.docx');
+        if (tool.id === 'camera') fileRef.current.setAttribute('capture', 'environment');
         else fileRef.current.removeAttribute('capture');
         fileRef.current.click();
       }
       return;
     }
-    if(tool.id==='history') {
-      setNotice(history.length ? 'पुरानी बातचीत नीचे साइड मेनू में उपलब्ध है।' : 'अभी कोई पुरानी बातचीत सेव नहीं है।');
+
+    if (tool.id === 'history') {
+      setNotice(history.length
+        ? 'पुरानी बातचीत साइड मेनू में उपलब्ध है।'
+        : 'अभी कोई पुरानी बातचीत सेव नहीं है।');
       setMenu(true);
       return;
     }
-    setNotice(tool.title+' चुना गया। इस सुविधा को चलाने के लिए संबंधित सेवा कनेक्ट करनी होगी।');
+
+    const notices = {
+      library: 'Image Library की सुविधा अभी जोड़ी जानी बाकी है।',
+      image: 'Image Generation के लिए वास्तविक इमेज सेवा जोड़नी बाकी है।',
+      video: 'Video Generation के लिए वास्तविक वीडियो सेवा और API चाहिए।'
+    };
+    setNotice(notices[tool.id] || tool.title + ' सुविधा अभी जोड़ी जा रही है।');
   }
 
   function voiceInput() {
