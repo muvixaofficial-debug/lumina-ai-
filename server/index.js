@@ -112,7 +112,7 @@ app.post('/api/chat', async (req, res) => {
           text.includes('INTERNAL') ||
           text.includes('HIGH DEMAND');
         if (!retryable || attempt === 3) throw error;
-        const delay = attempt * 1200;
+        const delay = attempt * 500;
         console.warn(`Gemini temporary error; retry ${attempt + 1}/3 after ${delay}ms`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
@@ -129,14 +129,30 @@ app.post('/api/chat', async (req, res) => {
 
     return res.json({ answer });
   } catch (error) {
-    console.error(
-      'Gemini request failed:',
-      error?.status || '',
-      error?.message || 'Unknown error'
-    );
+    const status = Number(error?.status || error?.code || 0);
+    const message = String(error?.message || 'Unknown error');
+    console.error('Gemini request failed:', status, message);
+
+    if (status === 429 || /RESOURCE_EXHAUSTED|QUOTA|RATE LIMIT/i.test(message)) {
+      return res.status(429).json({
+        error: 'AI ki request limit ya quota poora ho gaya hai. Kuch der baad dobara koshish karen.'
+      });
+    }
+
+    if (status === 401 || status === 403 || /API KEY|PERMISSION_DENIED|UNAUTHENTICATED/i.test(message)) {
+      return res.status(502).json({
+        error: 'AI service ki authentication ya permission setting mein dikkat hai.'
+      });
+    }
+
+    if ([500, 502, 503, 504].includes(status) || /UNAVAILABLE|HIGH DEMAND|INTERNAL/i.test(message)) {
+      return res.status(503).json({
+        error: 'AI service abhi busy hai. Kuch der baad dobara koshish karen.'
+      });
+    }
 
     return res.status(502).json({
-      error: 'AI jawab nahi de paya. Server settings check karen.'
+      error: 'AI service se jawab nahi mila. Server logs mein asli error check karen.'
     });
   }
 });
