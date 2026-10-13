@@ -8,6 +8,8 @@ dotenv.config();
 const app = express();
 const port = Number(process.env.PORT || 3000);
 
+let quotaCooldownUntil = 0;
+
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
 app.use(cors());
@@ -31,6 +33,10 @@ app.get('/health', (_req, res) => {
 });
 
 app.post('/api/chat', async (req, res) => {
+  if (Date.now() < quotaCooldownUntil) {
+    return res.status(429).json({ error: 'AI ki quota limit abhi thodi der ke liye ruki hui hai. Baad mein dobara koshish karen.' });
+  }
+
   try {
     const key = process.env.GEMINI_API_KEY;
 
@@ -134,6 +140,7 @@ app.post('/api/chat', async (req, res) => {
     console.error('Gemini request failed:', status, message);
 
     if (status === 429 || /RESOURCE_EXHAUSTED|QUOTA|RATE LIMIT/i.test(message)) {
+      quotaCooldownUntil = Date.now() + 60_000;
       return res.status(429).json({
         error: 'AI ki request limit ya quota poora ho gaya hai. Kuch der baad dobara koshish karen.'
       });
