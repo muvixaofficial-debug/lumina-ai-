@@ -137,7 +137,11 @@ app.post('/api/chat', async (req, res) => {
   } catch (error) {
     const status = Number(error?.status || error?.code || 0);
     const message = String(error?.message || 'Unknown error');
+    const retryInfo = error?.errorDetails || error?.details || error?.response?.headers?.get?.('retry-after') || '';
     console.error('Gemini request failed:', status, message);
+    if (status === 429 || /RESOURCE_EXHAUSTED|QUOTA|RATE LIMIT/i.test(message)) {
+      console.error('Gemini quota retry info:', JSON.stringify(retryInfo).slice(0, 1000));
+    }
 
     if (status === 429 || /RESOURCE_EXHAUSTED|QUOTA|RATE LIMIT/i.test(message)) {
       quotaCooldownUntil = Date.now() + 60_000;
