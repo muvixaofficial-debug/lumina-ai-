@@ -131,41 +131,36 @@ export default function App() {
     setMenu(false);
     setPlus(false);
     setProfileOpen(false);
-
     if (tool.id === 'new') return newChat();
-
-    if (tool.id === 'coding' || tool.id === 'study') {
-      setActiveMode(tool.id);
-      setNotice(tool.id === 'coding'
-        ? 'Coding AI चुना गया। अब अपना कोड या प्रोग्रामिंग सवाल लिखें।'
-        : 'Study AI चुना गया। अब अपना विषय या पढ़ाई का सवाल लिखें।');
-      return;
-    }
-
-    if (tool.id === 'files' || tool.id === 'camera') {
-      if (fileRef.current) {
-        fileRef.current.setAttribute('accept', 'image/*,application/pdf,.txt,.doc,.docx');
-        if (tool.id === 'camera') fileRef.current.setAttribute('capture', 'environment');
-        else fileRef.current.removeAttribute('capture');
-        fileRef.current.click();
-      }
-      return;
-    }
-
     if (tool.id === 'history') {
-      setNotice(history.length
-        ? 'पुरानी बातचीत साइड मेनू में उपलब्ध है।'
-        : 'अभी कोई पुरानी बातचीत सेव नहीं है।');
+      setNotice(history.length ? 'पुरानी बातचीत साइड मेनू में उपलब्ध है।' : 'अभी कोई पुरानी बातचीत सेव नहीं है।');
       setMenu(true);
       return;
     }
-
-    const notices = {
-      library: 'Image Library की सुविधा अभी जोड़ी जानी बाकी है।',
-      image: 'Image Generation के लिए वास्तविक इमेज सेवा जोड़नी बाकी है।',
-      video: 'Video Generation के लिए वास्तविक वीडियो सेवा और API चाहिए।'
-    };
-    setNotice(notices[tool.id] || tool.title + ' सुविधा अभी जोड़ी जा रही है।');
+    if (['coding','study','image','video','library','camera','files'].includes(tool.id)) {
+      setActiveMode(tool.id);
+      if (tool.id === 'coding' || tool.id === 'study') {
+        setNotice('');
+        return;
+      }
+      if (tool.id === 'camera' || tool.id === 'files') {
+        if (fileRef.current) {
+          fileRef.current.setAttribute('accept','image/*,application/pdf,.txt,.doc,.docx');
+          if (tool.id === 'camera') fileRef.current.setAttribute('capture','environment');
+          else fileRef.current.removeAttribute('capture');
+          fileRef.current.click();
+        }
+        return;
+      }
+      const notices = {
+        image:'Image Generation चुना गया है, लेकिन तस्वीर बनाने की AI सेवा अभी कनेक्ट नहीं है।',
+        video:'Video Generation चुना गया है, लेकिन वीडियो बनाने की सेवा अभी कनेक्ट नहीं है।',
+        library:'Image Library चुना गया है; लाइब्रेरी सेव करने की सुविधा अभी तैयार नहीं है।'
+      };
+      setNotice(notices[tool.id] || '');
+      return;
+    }
+    setNotice(tool.title + ' सुविधा अभी जोड़ी जा रही है।');
   }
 
   function voiceInput() {
@@ -253,6 +248,14 @@ export default function App() {
         </button>)}
       </div></>}
       <div className="composer">
+        {activeMode !== 'chat' && (() => {
+          const selectedTool = tools.find(tool => tool.id === activeMode);
+          return selectedTool ? <div className="mode-chip" title={selectedTool.title}>
+            <span className="mode-chip-icon"><Icon name={selectedTool.icon} size={18}/></span>
+            <span className="mode-chip-label">{selectedTool.title === 'Study AI' ? 'Study Mode' : selectedTool.title === 'Coding' ? 'Coding Mode' : selectedTool.title}</span>
+            <button className="mode-chip-remove" aria-label="चुना हुआ मोड हटाएँ" onClick={() => { setActiveMode('chat'); setNotice(''); }}><Icon name="close" size={16}/></button>
+          </div> : null;
+        })()}
         <button className="plus-btn" aria-label="टूल जोड़ें" onClick={()=>setPlus(!plus)}><Icon name={plus?'close':'plus'} size={24}/></button>
         <textarea rows="1" value={message} placeholder="Message Lumina AI" aria-label="अपना संदेश लिखें" onChange={e=>setMessage(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}}/>
         <button className={'mic-btn '+(listening?'listening':'')} aria-label="बोलकर लिखें" onClick={voiceInput}><Icon name="mic" size={21}/></button>

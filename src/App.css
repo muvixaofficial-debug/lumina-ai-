@@ -112,3 +112,12 @@ button:focus-visible,textarea:focus-visible{outline:2px solid #9b9bf9;outline-of
 @media (max-width: 600px) {
   .user-bubble, .assistant-bubble { max-width: 92%; padding: 10px 13px; }
 }
+
+/* Selected tool chip */
+.composer { flex-wrap: wrap; }
+.mode-chip { order:-1; flex:0 0 auto; max-width:100%; min-height:38px; display:inline-flex; align-items:center; gap:8px; margin:1px 0 2px 1px; padding:5px 7px 5px 10px; border-radius:22px; background:#f0f0f2; color:#292a30; }
+.mode-chip-icon { display:inline-flex; align-items:center; color:#45464d; }
+.mode-chip-label { min-width:0; max-width:min(55vw,240px); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; font-weight:550; }
+.mode-chip-remove { width:27px; height:27px; flex-shrink:0; display:grid; place-items:center; border:0; border-radius:50%; background:#fff; color:#42434a; }
+.mode-chip-remove:hover { background:#e1e1e5; }
+@media(max-width:600px) { .composer { gap:5px; } .mode-chip { min-height:36px; } .mode-chip-label { font-size:13px; } .tools-menu { max-height:min(58dvh,440px); } }
