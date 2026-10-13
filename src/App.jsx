@@ -119,10 +119,13 @@ export default function App() {
         {role:'assistant', text:data.answer.trim(), id:Date.now()+1}
       ]);
     } catch (error) {
+      const errorMessage = error.message || '';
       setNotice(
         error.name === 'TypeError'
           ? 'इंटरनेट या सर्वर से कनेक्शन नहीं हो पाया। थोड़ी देर बाद दोबारा कोशिश करें।'
-          : (error.message || 'AI से जवाब लेते समय समस्या हुई।')
+          : /quota|request limit|RESOURCE_EXHAUSTED|429/i.test(errorMessage)
+            ? 'Lumina AI की मुफ्त दैनिक AI सीमा पूरी हो गई है। Google की सीमा रीसेट होने पर दोबारा कोशिश करें।'
+            : (errorMessage || 'AI से जवाब लेते समय समस्या हुई।')
       );
     } finally {
       setIsLoading(false);
