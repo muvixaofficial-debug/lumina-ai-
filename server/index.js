@@ -33,19 +33,7 @@ app.get('/health', (_req, res) => {
 });
 
 app.post('/api/chat', async (req, res) => {
-  if (Date.now() < quotaCooldownUntil) {
-    return res.status(429).json({ error: 'AI ki quota limit abhi thodi der ke liye ruki hui hai. Baad mein dobara koshish karen.' });
-  }
-
   try {
-    const key = process.env.GEMINI_API_KEY;
-
-    if (!key) {
-      return res.status(503).json({
-        error: 'Server par Gemini API Key set nahi hai.'
-      });
-    }
-
     const message = typeof req.body?.message === 'string'
       ? req.body.message.trim()
       : '';
@@ -67,6 +55,30 @@ app.post('/api/chat', async (req, res) => {
     const mode = ['chat', 'coding', 'study'].includes(req.body?.mode)
       ? req.body.mode
       : 'chat';
+
+    if (mode === 'chat') {
+      const normalized = message.toLowerCase().replace(/[?!.,।]+$/g, '').trim();
+      const quickAnswers = new Map([
+        ['tumhara naam kya hai', 'Mera naam Lumina AI hai. Main aapka AI assistant hoon.'],
+        ['tumhara naam', 'Mera naam Lumina AI hai.'],
+        ['what is your name', 'My name is Lumina AI. I am your AI assistant.'],
+        ['what is your name?', 'My name is Lumina AI. I am your AI assistant.'],
+        ['hello', 'Hello! Main Lumina AI hoon. Aapki kya madad karun?'],
+        ['hi', 'Hi! Main Lumina AI hoon. Aapki kya madad karun?'],
+        ['namaste', 'Namaste! Main Lumina AI hoon. Bataiye, main kya madad karun?']
+      ]);
+      if (quickAnswers.has(normalized)) {
+        return res.json({ answer: quickAnswers.get(normalized) });
+      }
+    }
+
+    const key = process.env.GEMINI_API_KEY;
+
+    if (!key) {
+      return res.status(503).json({
+        error: 'Server par Gemini API Key set nahi hai.'
+      });
+    }
 
     const modeInstructions = {
       chat: 'You are Lumina AI, a helpful and honest assistant. Reply in the language used by the user.',
