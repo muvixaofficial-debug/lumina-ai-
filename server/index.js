@@ -195,45 +195,46 @@ app.post('/api/image', async (req, res) => {
       return res.status(413).json({ error: 'Prompt 2000 characters se chhota rakhen.' });
     }
 
-    const key = process.env.GEMINI_API_KEY;
-    if (!key) {
-      return res.status(503).json({ error: 'Server par Gemini API Key set nahi hai.' });
+    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+    const token = process.env.CLOUDFLARE_API_TOKEN;
+
+    if (!accountId || !token) {
+      return res.status(503).json({ error: 'Cloudflare AI credentials server par set nahi hain.' });
     }
 
-    const ai = new GoogleGenAI({ apiKey: key });
-    const result = await ai.models.generateContent({
-      model: process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image',
-      contents: prompt,
-      config: {
-        responseModalities: ['TEXT', 'IMAGE']
+    const model = process.env.CLOUDFLARE_IMAGE_MODEL || '@cf/black-forest-labs/flux-1-schnell';
+    const response = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${model}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ prompt })
       }
-    });
+    );
 
-    const parts = result.candidates?.[0]?.content?.parts || [];
-    const imagePart = parts.find(part => part.inlineData?.data);
+    const result = await response.json();
 
-    if (!imagePart) {
-      return res.status(502).json({
-        error: 'AI ne tasveer nahi bheji. Model access, quota aur response check karen.'
-      });
+    if (!response.ok || !result.success) {
+      console.error('Cloudflare image generation failed:', response.status, JSON.stringify(result.errors || []));
+      return res.status(502).json({ error: 'Cloudflare se tasveer nahi ban saki. Credentials, model access ya usage limit check karen.' });
     }
 
-    const mimeType = imagePart.inlineData.mimeType || 'image/png';
-    return res.json({
-      image: `data:${mimeType};base64,${imagePart.inlineData.data}`
-    });
+    const imageData = result.result?.image || result.result?.data;
+    if (!imageData) {
+      return res.status(502).json({ error: 'Cloudflare ne image data nahi bheja.' });
+    }
+
+    const base64 = typeof imageData === 'string'
+      ? imageData
+      : Buffer.from(imageData).toString('base64');
+
+    return res.json({ image: `data:image/png;base64,${base64}` });
   } catch (error) {
-    const status = Number(error?.status || error?.code || 0);
-    const message = String(error?.message || 'Unknown error');
-    console.error('Image generation failed:', status, message);
-
-    if (status === 429 || /RESOURCE_EXHAUSTED|QUOTA|RATE LIMIT/i.test(message)) {
-      return res.status(429).json({ error: 'Image generation quota poora ho gaya hai. Baad mein dobara koshish karen.' });
-    }
-    if (status === 401 || status === 403 || /PERMISSION_DENIED|UNAUTHENTICATED|API KEY/i.test(message)) {
-      return res.status(502).json({ error: 'Image model ki permission ya API key mein dikkat hai.' });
-    }
-    return res.status(502).json({ error: 'Tasveer nahi ban saki. Image model access aur server logs check karen.' });
+    console.error('Cloudflare image generation error:', String(error?.message || error));
+    return res.status(502).json({ error: 'Image generation mein dikkat aayi. Thodi der baad dobara koshish karen.' });
   }
 });
 
