@@ -53,6 +53,9 @@ export default function App() {
   const [message,setMessage] = useState('');
   const [imagePrompt,setImagePrompt] = useState('');
   const [generatedImage,setGeneratedImage] = useState('');
+  const [selectedImage,setSelectedImage] = useState('');
+  const [selectedImageName,setSelectedImageName] = useState('');
+  const imageUploadRef = useRef(null);
   const [imageLoading,setImageLoading] = useState(false);
   const [activeMode,setActiveMode] = useState('chat');
   const [messages,setMessages] = useState([]);
@@ -150,7 +153,7 @@ export default function App() {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt })
+          body: JSON.stringify({ prompt, image: selectedImage || undefined })
         }
       );
 
@@ -289,6 +292,41 @@ export default function App() {
   <section className="image-generator">
     <h2>🖼️ Image Generation</h2>
     <p>आप कैसी तस्वीर बनाना चाहते हैं?</p>
+    <input
+      ref={imageUploadRef}
+      type="file"
+      accept="image/png,image/jpeg,image/webp"
+      hidden
+      onChange={e => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+          setNotice('फोटो 5 MB से छोटी चुनें।');
+          e.target.value = '';
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          setSelectedImage(String(reader.result || ''));
+          setSelectedImageName(file.name);
+          setNotice('');
+        };
+        reader.onerror = () => setNotice('फोटो पढ़ी नहीं जा सकी। दूसरी फोटो चुनें।');
+        reader.readAsDataURL(file);
+      }}
+    />
+    <button type="button" onClick={() => imageUploadRef.current?.click()}>
+      📷 गैलरी से अपनी फोटो चुनें
+    </button>
+    {selectedImage && <div style={{margin:'12px 0',textAlign:'center'}}>
+      <img src={selectedImage} alt="अपलोड की गई फोटो" style={{maxWidth:'100%',maxHeight:220,borderRadius:14}} />
+      <p>{selectedImageName}</p>
+      <button type="button" onClick={() => {
+        setSelectedImage('');
+        setSelectedImageName('');
+        if (imageUploadRef.current) imageUploadRef.current.value='';
+      }}>फोटो हटाएँ</button>
+    </div>}
     <textarea
       value={imagePrompt}
       onChange={e => setImagePrompt(e.target.value)}
@@ -302,7 +340,7 @@ export default function App() {
       onClick={generateImage}
       disabled={imageLoading || !imagePrompt.trim()}
     >
-      {imageLoading ? 'तस्वीर बन रही है…' : '🎨 तस्वीर बनाएँ'}
+      {imageLoading ? 'तस्वीर बन रही है…' : (selectedImage ? '✨ मेरी फोटो AI से एडिट करें' : '🎨 नई तस्वीर बनाएँ')}
     </button>
     {imageLoading && <p>कृपया प्रतीक्षा करें…</p>}
     {generatedImage && (

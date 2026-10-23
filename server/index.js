@@ -13,7 +13,7 @@ let quotaCooldownUntil = 0;
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
 app.use(cors());
-app.use(express.json({ limit: '32kb' }));
+app.use(express.json({ limit: '8mb' }));
 app.use('/api/', rateLimit({
   windowMs: 60000,
   limit: 20,
@@ -195,6 +195,14 @@ app.post('/api/image', async (req, res) => {
       return res.status(413).json({ error: 'Prompt 2000 characters se chhota rakhen.' });
     }
 
+    const uploadedImage = typeof req.body?.image === 'string' ? req.body.image : '';
+    if (uploadedImage && !/^data:image\/(png|jpeg|webp);base64,/i.test(uploadedImage)) {
+      return res.status(400).json({ error: 'PNG, JPG या WebP फोटो चुनें।' });
+    }
+    if (uploadedImage.length > 7 * 1024 * 1024) {
+      return res.status(413).json({ error: 'फोटो छोटी चुनें। अधिकतम 5 MB की फोटो इस्तेमाल करें।' });
+    }
+
     const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
     const token = process.env.CLOUDFLARE_API_TOKEN;
 
@@ -202,7 +210,9 @@ app.post('/api/image', async (req, res) => {
       return res.status(503).json({ error: 'Cloudflare AI credentials server par set nahi hain.' });
     }
 
-    const model = process.env.CLOUDFLARE_IMAGE_MODEL || '@cf/black-forest-labs/flux-1-schnell';
+    const model = uploadedImage
+      ? '@cf/runwayml/stable-diffusion-v1-5-img2img'
+      : (process.env.CLOUDFLARE_IMAGE_MODEL || '@cf/black-forest-labs/flux-1-schnell');
     const response = await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${model}`,
       {
@@ -211,7 +221,14 @@ app.post('/api/image', async (req, res) => {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ prompt })
+        body: JSON.stringify(uploadedImage
+          ? {
+              prompt,
+              image_b64: uploadedImage.replace(/^data:image\/(png|jpeg|webp);base64,/i, ''),
+              strength: 0.65,
+              num_steps: 20
+            }
+          : { prompt })
       }
     );
 
