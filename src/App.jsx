@@ -51,6 +51,9 @@ function Waveform() {
 
 export default function App() {
   const [message,setMessage] = useState('');
+  const [imagePrompt,setImagePrompt] = useState('');
+  const [generatedImage,setGeneratedImage] = useState('');
+  const [imageLoading,setImageLoading] = useState(false);
   const [activeMode,setActiveMode] = useState('chat');
   const [messages,setMessages] = useState([]);
   const [isLoading,setIsLoading] = useState(false);
@@ -129,6 +132,43 @@ export default function App() {
       );
     } finally {
       setIsLoading(false);
+    }
+  }
+
+
+  async function generateImage() {
+    const prompt = imagePrompt.trim();
+    if (!prompt || imageLoading) return;
+
+    setImageLoading(true);
+    setGeneratedImage('');
+    setNotice('');
+
+    try {
+      const response = await fetch(
+        'https://muvixa-lumina-backend-8417.onrender.com/api/image',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt })
+        }
+      );
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || `सर्वर त्रुटि (${response.status})`);
+      }
+      if (typeof data.image !== 'string' || !data.image.startsWith('data:image/')) {
+        throw new Error('AI से तस्वीर नहीं मिली। कृपया दोबारा कोशिश करें।');
+      }
+
+      setGeneratedImage(data.image);
+    } catch (error) {
+      setNotice(error.name === 'TypeError'
+        ? 'इंटरनेट या सर्वर से कनेक्शन नहीं हो पाया।'
+        : (error.message || 'तस्वीर बनाते समय समस्या हुई।'));
+    } finally {
+      setImageLoading(false);
     }
   }
 
@@ -245,7 +285,36 @@ export default function App() {
       {notice&&<div className="notice-inline"><span>{notice}</span><button aria-label="संदेश बंद करें" onClick={()=>setNotice('')}><Icon name="close" size={16}/></button></div>}
     </main>
 
-    <footer className="composer-wrap">
+    {activeMode === 'image' && (
+  <section className="image-generator">
+    <h2>🖼️ Image Generation</h2>
+    <p>आप कैसी तस्वीर बनाना चाहते हैं?</p>
+    <textarea
+      value={imagePrompt}
+      onChange={e => setImagePrompt(e.target.value)}
+      placeholder="जैसे: पहाड़ों के बीच एक सुंदर anime गाँव..."
+      maxLength={2000}
+      rows={3}
+      aria-label="तस्वीर का विवरण"
+    />
+    <button
+      type="button"
+      onClick={generateImage}
+      disabled={imageLoading || !imagePrompt.trim()}
+    >
+      {imageLoading ? 'तस्वीर बन रही है…' : '🎨 तस्वीर बनाएँ'}
+    </button>
+    {imageLoading && <p>कृपया प्रतीक्षा करें…</p>}
+    {generatedImage && (
+      <div className="generated-image-result">
+        <img src={generatedImage} alt={imagePrompt || 'AI द्वारा बनाई गई तस्वीर'} />
+        <a href={generatedImage} download="lumina-ai-image.png">तस्वीर डाउनलोड करें</a>
+      </div>
+    )}
+  </section>
+)}
+
+<footer className="composer-wrap">
       {plus&&<><button className="dismiss-layer" aria-label="मेनू बंद करें" onClick={()=>setPlus(false)}/><div className="tools-menu">
         {tools.map(tool=><button className="tool-item" key={tool.id} onClick={()=>chooseTool(tool)}>
           <span className="tool-icon"><Icon name={tool.icon} size={21}/></span>

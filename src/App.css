@@ -121,3 +121,85 @@ button:focus-visible,textarea:focus-visible{outline:2px solid #9b9bf9;outline-of
 .mode-chip-remove { width:27px; height:27px; flex-shrink:0; display:grid; place-items:center; border:0; border-radius:50%; background:#fff; color:#42434a; }
 .mode-chip-remove:hover { background:#e1e1e5; }
 @media(max-width:600px) { .composer { gap:5px; } .mode-chip { min-height:36px; } .mode-chip-label { font-size:13px; } .tools-menu { max-height:min(58dvh,440px); } }
+
+/* Lumina AI - Image Generation */
+.image-generator {
+  width: 100%;
+  max-width: 720px;
+  margin: 18px auto;
+  padding: 18px;
+  border: 1px solid #e5e1f5;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #ffffff, #f7f5ff);
+  box-shadow: 0 8px 28px rgba(75, 55, 140, 0.08);
+}
+
+.image-generator h2 {
+  margin: 0 0 10px;
+  color: #5946c7;
+  font-size: 21px;
+}
+
+.image-generator p {
+  margin: 8px 0 12px;
+  color: #62636d;
+  font-size: 14px;
+}
+
+.image-generator textarea {
+  display: block;
+  width: 100%;
+  min-height: 95px;
+  padding: 12px;
+  resize: vertical;
+  border: 1px solid #ded9f0;
+  border-radius: 12px;
+  background: #fff;
+  color: #202123;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.image-generator > button {
+  width: 100%;
+  min-height: 46px;
+  margin-top: 12px;
+  padding: 11px 16px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(100deg, #6747df, #a044d5);
+  color: #fff;
+  font-weight: 700;
+}
+
+.image-generator > button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.generated-image-result {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.generated-image-result img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 65vh;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #eeeaf7;
+}
+
+.generated-image-result a {
+  display: block;
+  padding: 12px;
+  border-radius: 10px;
+  background: #eee9ff;
+  color: #5946c7;
+  text-align: center;
+  text-decoration: none;
+  font-weight: 700;
+}

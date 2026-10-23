@@ -113,7 +113,7 @@ app.post('/api/chat', async (req, res) => {
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         result = await ai.models.generateContent({
-          model: 'gemini-3.8-flash',
+          model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
           contents,
           config: {
             systemInstruction: modeInstructions[mode]
@@ -177,6 +177,63 @@ app.post('/api/chat', async (req, res) => {
     return res.status(502).json({
       error: 'AI service se jawab nahi mila. Server logs mein asli error check karen.'
     });
+  }
+});
+
+
+app.post('/api/image', async (req, res) => {
+  try {
+    const prompt = typeof req.body?.prompt === 'string'
+      ? req.body.prompt.trim()
+      : '';
+
+    if (!prompt) {
+      return res.status(400).json({ error: 'Tasveer ka prompt likhen.' });
+    }
+
+    if (prompt.length > 2000) {
+      return res.status(413).json({ error: 'Prompt 2000 characters se chhota rakhen.' });
+    }
+
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) {
+      return res.status(503).json({ error: 'Server par Gemini API Key set nahi hai.' });
+    }
+
+    const ai = new GoogleGenAI({ apiKey: key });
+    const result = await ai.models.generateContent({
+      model: process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image',
+      contents: prompt,
+      config: {
+        responseModalities: ['TEXT', 'IMAGE']
+      }
+    });
+
+    const parts = result.candidates?.[0]?.content?.parts || [];
+    const imagePart = parts.find(part => part.inlineData?.data);
+
+    if (!imagePart) {
+      return res.status(502).json({
+        error: 'AI ne tasveer nahi bheji. Model access, quota aur response check karen.'
+      });
+    }
+
+    const mimeType = imagePart.inlineData.mimeType || 'image/png';
+    return res.json({
+      image: `data:${mimeType};base64,${imagePart.inlineData.data}`
+    });
+  } catch (error) {
+    const status = Number(error?.status || error?.code || 0);
+    const message = String(error?.message || 'Unknown error');
+    console.error('Image generation failed:', status, message);
+
+    if (status === 429 || /RESOURCE_EXHAUSTED|QUOTA|RATE LIMIT/i.test(message)) {
+      return res.status(429).json({ error: 'Image generation quota poora ho gaya hai. Baad mein dobara koshish karen.' });
+    }
+    if (status === 401 || status === 403 || /PERMISSION_DENIED|UNAUTHENTICATED|API KEY/i.test(message)) {
+      return res.status(502).json({ error: 'Image model ki permission ya API key mein dikkat hai.' });
+    }
+    return res.status(502).json({ error: 'Tasveer nahi ban saki. Image model access aur server logs check karen.' });
   }
 });
 
