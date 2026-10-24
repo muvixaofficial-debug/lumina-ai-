@@ -303,31 +303,44 @@ export default function App() {
     rec.interimResults = false;
     let sent = false;
 
+    const removeRepeatedPhrases = input => {
+      let words = String(input || '').replace(/\s+/g, ' ').trim().split(' ').filter(Boolean);
+
+      for (let pass = 0; pass < 12; pass++) {
+        let changed = false;
+        for (let size = Math.min(8, Math.floor(words.length / 2)); size >= 1; size--) {
+          for (let j = 0; j + size * 2 <= words.length; j++) {
+            const first = words.slice(j, j + size).join(' ').toLocaleLowerCase('hi-IN');
+            const second = words.slice(j + size, j + size * 2).join(' ').toLocaleLowerCase('hi-IN');
+            if (first === second) {
+              words.splice(j + size, size);
+              changed = true;
+              break;
+            }
+          }
+          if (changed) break;
+        }
+        if (!changed) break;
+      }
+      return words.join(' ').trim();
+    };
+
     rec.onstart = () => setListening(true);
 
     rec.onresult = event => {
       if (sent || !voiceModeRef.current) return;
 
-      const parts = [];
-      for (let i = 0; i < event.results.length; i++) {
+      let transcript = '';
+      for (let i = event.results.length - 1; i >= 0; i--) {
         const result = event.results[i];
-        if (result.isFinal && result[0]?.transcript) {
-          parts.push(result[0].transcript.trim());
+        if (result.isFinal && result[0]?.transcript?.trim()) {
+          transcript = result[0].transcript.trim();
+          break;
         }
       }
 
-      let spoken = parts.join(' ').replace(/\s+/g, ' ').trim();
+      const spoken = removeRepeatedPhrases(transcript);
       if (spoken.length < 2) return;
-
-      // Remove only an exactly repeated complete transcript.
-      const words = spoken.split(/\s+/);
-      if (words.length >= 4 && words.length % 2 === 0) {
-        const half = words.length / 2;
-        if (words.slice(0, half).join(' ').toLowerCase() ===
-            words.slice(half).join(' ').toLowerCase()) {
-          spoken = words.slice(0, half).join(' ');
-        }
-      }
 
       sent = true;
       setNotice('आपने कहा: ' + spoken);
