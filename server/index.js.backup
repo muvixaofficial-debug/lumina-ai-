@@ -1,0 +1,260 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
+import { GoogleGenAI } from '@google/genai';
+
+dotenv.config();
+const app = express();
+const port = Number(process.env.PORT || 3000);
+
+let quotaCooldownUntil = 0;
+
+app.disable('x-powered-by');
+app.set('trust proxy', 1);
+app.use(cors());
+app.use(express.json({ limit: '8mb' }));
+app.use('/api/', rateLimit({
+  windowMs: 60000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false
+}));
+
+app.get('/', (_req, res) => {
+  res.json({ app: 'Lumina AI Server', status: 'running' });
+});
+
+app.get('/health', (_req, res) => {
+  res.json({
+    status: 'ok',
+    keyConfigured: Boolean(process.env.GEMINI_API_KEY)
+  });
+});
+
+app.post('/api/chat', async (req, res) => {
+  try {
+    const message = typeof req.body?.message === 'string'
+      ? req.body.message.trim()
+      : '';
+
+    if (!message) {
+      return res.status(400).json({ error: 'Apna sawal likhen.' });
+    }
+
+    if (message.length > 8000) {
+      return res.status(413).json({
+        error: 'Sawal 8000 characters se chhota rakhen.'
+      });
+    }
+
+    const history = Array.isArray(req.body?.history)
+      ? req.body.history.slice(-12)
+      : [];
+
+    const mode = ['chat', 'coding', 'study'].includes(req.body?.mode)
+      ? req.body.mode
+      : 'chat';
+
+    if (mode === 'chat') {
+      const normalized = message.toLowerCase().replace(/[?!.,।]+$/g, '').trim();
+      const quickAnswers = new Map([
+        ['tumhara naam kya hai', 'Mera naam Lumina AI hai. Main aapka AI assistant hoon.'],
+        ['tumhara naam', 'Mera naam Lumina AI hai.'],
+        ['what is your name', 'My name is Lumina AI. I am your AI assistant.'],
+        ['what is your name?', 'My name is Lumina AI. I am your AI assistant.'],
+        ['hello', 'Hello! Main Lumina AI hoon. Aapki kya madad karun?'],
+        ['hi', 'Hi! Main Lumina AI hoon. Aapki kya madad karun?'],
+        ['namaste', 'Namaste! Main Lumina AI hoon. Bataiye, main kya madad karun?']
+      ]);
+      if (quickAnswers.has(normalized)) {
+        return res.json({ answer: quickAnswers.get(normalized) });
+      }
+    }
+
+    const key = process.env.GEMINI_API_KEY;
+
+    if (!key) {
+      return res.status(503).json({
+        error: 'Server par Gemini API Key set nahi hai.'
+      });
+    }
+
+    const modeInstructions = {
+      chat: 'You are Lumina AI, a helpful and honest assistant. Reply in the language used by the user.',
+      coding: 'You are Lumina Coding AI. Help write, explain, debug, and improve code. Give runnable examples when useful, explain errors clearly, and never claim code was tested unless it was actually run. Reply in the user’s language.',
+      study: 'You are Lumina Study AI, a patient tutor. Explain concepts step by step in the user’s language, use examples and practice questions when useful, and do not invent facts.'
+    };
+
+    const contents = [];
+
+    for (const item of history) {
+      if (
+        item &&
+        ['user', 'model'].includes(item.role) &&
+        typeof item.text === 'string'
+      ) {
+        contents.push({
+          role: item.role,
+          parts: [{ text: item.text.slice(0, 4000) }]
+        });
+      }
+    }
+
+    contents.push({
+      role: 'user',
+      parts: [{ text: message }]
+    });
+
+    const ai = new GoogleGenAI({ apiKey: key });
+
+    let result;
+    let lastError;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        result = await ai.models.generateContent({
+          model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+          contents,
+          config: {
+            systemInstruction: modeInstructions[mode]
+          }
+        });
+        break;
+      } catch (error) {
+        lastError = error;
+        const status = Number(error?.status || error?.code || 0);
+        const text = String(error?.message || '').toUpperCase();
+        const retryable =
+          [500, 502, 503, 504].includes(status) ||
+          text.includes('UNAVAILABLE') ||
+          text.includes('INTERNAL') ||
+          text.includes('HIGH DEMAND');
+        if (!retryable || attempt === 3) throw error;
+        const delay = attempt * 500;
+        console.warn(`Gemini temporary error; retry ${attempt + 1}/3 after ${delay}ms`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    if (!result && lastError) throw lastError;
+
+    const answer = result.text?.trim();
+
+    if (!answer) {
+      return res.status(502).json({
+        error: 'AI se khaali jawab mila. Dobara koshish karen.'
+      });
+    }
+
+    return res.json({ answer });
+  } catch (error) {
+    const status = Number(error?.status || error?.code || 0);
+    const message = String(error?.message || 'Unknown error');
+    const retryInfo = error?.errorDetails || error?.details || error?.response?.headers?.get?.('retry-after') || '';
+    console.error('Gemini request failed:', status, message);
+    if (status === 429 || /RESOURCE_EXHAUSTED|QUOTA|RATE LIMIT/i.test(message)) {
+      console.error('Gemini quota retry info:', JSON.stringify(retryInfo).slice(0, 1000));
+    }
+
+    if (status === 429 || /RESOURCE_EXHAUSTED|QUOTA|RATE LIMIT/i.test(message)) {
+      quotaCooldownUntil = Date.now() + 60_000;
+      return res.status(429).json({
+        error: 'AI ki request limit ya quota poora ho gaya hai. Kuch der baad dobara koshish karen.'
+      });
+    }
+
+    if (status === 401 || status === 403 || /API KEY|PERMISSION_DENIED|UNAUTHENTICATED/i.test(message)) {
+      return res.status(502).json({
+        error: 'AI service ki authentication ya permission setting mein dikkat hai.'
+      });
+    }
+
+    if ([500, 502, 503, 504].includes(status) || /UNAVAILABLE|HIGH DEMAND|INTERNAL/i.test(message)) {
+      return res.status(503).json({
+        error: 'AI service abhi busy hai. Kuch der baad dobara koshish karen.'
+      });
+    }
+
+    return res.status(502).json({
+      error: 'AI service se jawab nahi mila. Server logs mein asli error check karen.'
+    });
+  }
+});
+
+
+app.post('/api/image', async (req, res) => {
+  try {
+    const prompt = typeof req.body?.prompt === 'string'
+      ? req.body.prompt.trim()
+      : '';
+
+    if (!prompt) {
+      return res.status(400).json({ error: 'Tasveer ka prompt likhen.' });
+    }
+
+    if (prompt.length > 2000) {
+      return res.status(413).json({ error: 'Prompt 2000 characters se chhota rakhen.' });
+    }
+
+    const uploadedImage = typeof req.body?.image === 'string' ? req.body.image : '';
+    if (uploadedImage && !/^data:image\/(png|jpeg|webp);base64,/i.test(uploadedImage)) {
+      return res.status(400).json({ error: 'PNG, JPG या WebP फोटो चुनें।' });
+    }
+    if (uploadedImage.length > 7 * 1024 * 1024) {
+      return res.status(413).json({ error: 'फोटो छोटी चुनें। अधिकतम 5 MB की फोटो इस्तेमाल करें।' });
+    }
+
+    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+    const token = process.env.CLOUDFLARE_API_TOKEN;
+
+    if (!accountId || !token) {
+      return res.status(503).json({ error: 'Cloudflare AI credentials server par set nahi hain.' });
+    }
+
+    const model = uploadedImage
+      ? '@cf/runwayml/stable-diffusion-v1-5-img2img'
+      : (process.env.CLOUDFLARE_IMAGE_MODEL || '@cf/black-forest-labs/flux-1-schnell');
+    const response = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${model}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(uploadedImage
+          ? {
+              prompt,
+              image_b64: uploadedImage.replace(/^data:image\/(png|jpeg|webp);base64,/i, ''),
+              strength: 0.65,
+              num_steps: 20
+            }
+          : { prompt })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      console.error('Cloudflare image generation failed:', response.status, JSON.stringify(result.errors || []));
+      return res.status(502).json({ error: 'Cloudflare se tasveer nahi ban saki. Credentials, model access ya usage limit check karen.' });
+    }
+
+    const imageData = result.result?.image || result.result?.data;
+    if (!imageData) {
+      return res.status(502).json({ error: 'Cloudflare ne image data nahi bheja.' });
+    }
+
+    const base64 = typeof imageData === 'string'
+      ? imageData
+      : Buffer.from(imageData).toString('base64');
+
+    return res.json({ image: `data:image/png;base64,${base64}` });
+  } catch (error) {
+    console.error('Cloudflare image generation error:', String(error?.message || error));
+    return res.status(502).json({ error: 'Image generation mein dikkat aayi. Thodi der baad dobara koshish karen.' });
+  }
+});
+
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Lumina AI server listening on ${port}`);
+});

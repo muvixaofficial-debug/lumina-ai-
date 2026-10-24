@@ -211,25 +211,38 @@ app.post('/api/image', async (req, res) => {
     }
 
     const model = uploadedImage
-      ? '@cf/runwayml/stable-diffusion-v1-5-img2img'
+      ? '@cf/black-forest-labs/flux-2-klein-4b'
       : (process.env.CLOUDFLARE_IMAGE_MODEL || '@cf/black-forest-labs/flux-1-schnell');
-    const response = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${model}`,
-      {
+
+    let requestOptions;
+    if (uploadedImage) {
+      const match = uploadedImage.match(/^data:image\/(png|jpeg|webp);base64,(.+)$/i);
+      if (!match) {
+        return res.status(400).json({ error: 'Photo format valid nahi hai. PNG, JPEG ya WebP upload karein.' });
+      }
+      const mime = match[1].toLowerCase() === 'jpg' ? 'image/jpeg' : `image/${match[1].toLowerCase()}`;
+      const form = new FormData();
+      form.append('prompt', prompt);
+      form.append('input_image_0', new Blob([Buffer.from(match[2], 'base64')], { type: mime }), 'reference-image');
+      requestOptions = {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form
+      };
+    } else {
+      requestOptions = {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(uploadedImage
-          ? {
-              prompt,
-              image_b64: uploadedImage.replace(/^data:image\/(png|jpeg|webp);base64,/i, ''),
-              strength: 0.65,
-              num_steps: 20
-            }
-          : { prompt })
-      }
+        body: JSON.stringify({ prompt })
+      };
+    }
+
+    const response = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${model}`,
+      requestOptions
     );
 
     const result = await response.json();
