@@ -286,7 +286,6 @@ export default function App() {
 
   function startVoiceListening() {
   if (!voiceModeRef.current || isLoading) return;
-
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
     setNotice('इस ब्राउज़र में Voice AI उपलब्ध नहीं है। Chrome इस्तेमाल करें।');
@@ -294,24 +293,30 @@ export default function App() {
     setVoiceMode(false);
     return;
   }
-
   try {
     const rec = new SR();
     voiceRecRef.current = rec;
     rec.lang = 'hi-IN';
     rec.continuous = true;
     rec.interimResults = true;
-
     let timer = null;
     let sent = false;
     let finalText = '';
     let interimText = '';
 
+    const cleanSpeech = text => {
+      let t = String(text || '').replace(/\s+/g, ' ').trim();
+      // Remove repeated adjacent words caused by recognition glitches.
+      for (let pass = 0; pass < 3; pass++) {
+        t = t.replace(/\b(\S+(?:\s+\S+){0,5})\s+\1\b/gi, '$1');
+      }
+      return t.trim();
+    };
+
     const flush = () => {
       if (sent || !voiceModeRef.current) return;
-      const spoken = (finalText || interimText).replace(/\s+/g, ' ').trim();
+      const spoken = cleanSpeech(finalText || interimText);
       if (spoken.length < 2) return;
-
       sent = true;
       if (timer) clearTimeout(timer);
       finalText = '';
@@ -321,45 +326,33 @@ export default function App() {
     };
 
     rec.onstart = () => setListening(true);
-
     rec.onresult = e => {
-      // हर event पर पूरी result list दोबारा पढ़ें, ताकि पुराने शब्द जुड़कर दोहरें नहीं।
       const finals = [];
       const interims = [];
-
       for (let i = 0; i < e.results.length; i++) {
-        const result = e.results[i];
-        const part = (result[0]?.transcript || '').trim();
+        const part = (e.results[i][0]?.transcript || '').trim();
         if (!part) continue;
-
-        if (result.isFinal) finals.push(part);
+        if (e.results[i].isFinal) finals.push(part);
         else interims.push(part);
       }
-
-      finalText = finals.join(' ').trim();
-      interimText = interims.join(' ').trim();
-
-      const preview = (finalText || interimText).replace(/\s+/g, ' ').trim();
+      finalText = cleanSpeech(finals.join(' '));
+      interimText = cleanSpeech(interims.join(' '));
+      const preview = finalText || interimText;
       if (preview) setNotice('सुन रहा हूँ: ' + preview);
-
       if (timer) clearTimeout(timer);
-      if (preview) timer = setTimeout(flush, 1200);
+      if (preview) timer = setTimeout(flush, 1400);
     };
-
     rec.onerror = e => {
       setListening(false);
       if (timer) clearTimeout(timer);
-      if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      if (e.error !== 'no-speech' && e.error !== 'aborted')
         setNotice('माइक में समस्या हुई। दोबारा बोलें।');
-      }
     };
-
     rec.onend = () => {
       setListening(false);
       if (timer) clearTimeout(timer);
       flush();
     };
-
     rec.start();
   } catch {
     setListening(false);
