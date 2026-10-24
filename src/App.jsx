@@ -91,6 +91,9 @@ export default function App() {
   const [plus,setPlus] = useState(false);
   const [notice,setNotice] = useState('');
   const [listening,setListening] = useState(false);
+  const [voiceMode,setVoiceMode] = useState(false);
+  const voiceRecRef = useRef(null);
+  const voiceModeRef = useRef(false);
   const [profileOpen,setProfileOpen] = useState(false);
   const [history,setHistory] = useState([]);
   const fileRef = useRef(null);
@@ -109,8 +112,8 @@ export default function App() {
     setProfileOpen(false);
   }
 
-  async function sendMessage() {
-    const text = message.trim();
+  async function sendMessage(textOverride) {
+    const text = (typeof textOverride === 'string' ? textOverride : message).trim();
     if (!text || isLoading) return;
 
     const previousHistory = messages
@@ -151,6 +154,15 @@ export default function App() {
         ...old,
         {role:'assistant', text:data.answer.trim(), id:Date.now()+1}
       ]);
+      if (voiceModeRef.current && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(data.answer.trim());
+        utterance.lang = 'hi-IN';
+        utterance.onend = () => {
+          if (voiceModeRef.current) startVoiceListening();
+        };
+        window.speechSynthesis.speak(utterance);
+      }
     } catch (error) {
       const errorMessage = error.message || '';
       setNotice(
@@ -237,20 +249,49 @@ export default function App() {
     setNotice(tool.title + ' सुविधा अभी जोड़ी जा रही है।');
   }
 
-  function voiceInput() {
-    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-    if(!SR) {
-      setNotice('इस Chrome ब्राउज़र में आवाज़ से लिखने की सुविधा उपलब्ध नहीं है। माइक्रोफ़ोन अनुमति जाँचें।');
+  function startVoiceListening() {
+    if (!voiceModeRef.current || isLoading) return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      setNotice('इस ब्राउज़र में Voice AI सुनने की सुविधा उपलब्ध नहीं है। Chrome इस्तेमाल करें।');
+      voiceModeRef.current = false;
+      setVoiceMode(false);
       return;
     }
-    const rec=new SR();
-    rec.lang='hi-IN';
-    rec.interimResults=false;
-    rec.onstart=()=>setListening(true);
-    rec.onend=()=>setListening(false);
-    rec.onerror=()=>{setListening(false);setNotice('माइक्रोफ़ोन की अनुमति जाँचें।');};
-    rec.onresult=e=>setMessage(old=>old+(old?' ':'')+e.results[0][0].transcript);
-    rec.start();
+    try {
+      const rec = new SR();
+      voiceRecRef.current = rec;
+      rec.lang = 'hi-IN';
+      rec.continuous = false;
+      rec.interimResults = false;
+      rec.onstart = () => setListening(true);
+      rec.onresult = e => {
+        const spoken = e.results?.[0]?.[0]?.transcript?.trim();
+        if (spoken && voiceModeRef.current) sendMessage(spoken);
+      };
+      rec.onerror = () => setListening(false);
+      rec.onend = () => setListening(false);
+      rec.start();
+    } catch {
+      setListening(false);
+      setNotice('माइक शुरू नहीं हुआ। दोबारा Voice बटन दबाएँ।');
+    }
+  }
+
+  function voiceInput() {
+    if (voiceModeRef.current) {
+      voiceModeRef.current = false;
+      setVoiceMode(false);
+      setListening(false);
+      voiceRecRef.current?.stop();
+      window.speechSynthesis?.cancel();
+      setNotice('Voice बातचीत बंद हो गई।');
+      return;
+    }
+    voiceModeRef.current = true;
+    setVoiceMode(true);
+    setNotice('Lumina सुन रहा है। बोलना शुरू करें। बंद करने के लिए Voice बटन दबाएँ।');
+    startVoiceListening();
   }
 
   function openHistory(item) {
@@ -473,7 +514,7 @@ export default function App() {
         <button className="plus-btn" aria-label="टूल जोड़ें" onClick={()=>setPlus(!plus)}><Icon name={plus?'close':'plus'} size={24}/></button>
         <textarea rows="1" value={message} placeholder="Message Lumina AI" aria-label="अपना संदेश लिखें" onChange={e=>setMessage(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}}/>
         <button className={'mic-btn '+(listening?'listening':'')} aria-label="बोलकर लिखें" onClick={voiceInput}><Icon name="mic" size={21}/></button>
-        {message.trim()?<button className="send-btn" aria-label="भेजें" disabled={isLoading} onClick={sendMessage}><Icon name="send" size={22}/></button>:<button className="voice-btn" aria-label="Voice mode" onClick={()=>setNotice('Voice बातचीत चालू करने के लिए AI voice सेवा कनेक्ट करनी होगी।')}><Waveform/></button>}
+        {message.trim()?<button className="send-btn" aria-label="भेजें" disabled={isLoading} onClick={sendMessage}><Icon name="send" size={22}/></button>:<button className={'voice-btn '+(voiceMode?'listening':'')} aria-label={voiceMode?'Voice बंद करें':'Voice बातचीत चालू करें'} onClick={voiceInput}><Waveform/></button>}
       </div>
       <p className="disclaimer">Lumina AI गलतियाँ कर सकता है। ज़रूरी जानकारी जाँच लें।</p>
       <input ref={fileRef} type="file" accept="image/*,application/pdf,.txt,.doc,.docx" hidden onChange={e=>{const file=e.target.files?.[0];if(file)setNotice('फ़ाइल चुनी गई: '+file.name+'। फ़ाइल पढ़ने की सुविधा जोड़ना बाकी है।');e.target.value='';}}/>
