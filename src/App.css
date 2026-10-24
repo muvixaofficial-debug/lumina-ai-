@@ -336,3 +336,41 @@ button:focus-visible,textarea:focus-visible{outline:2px solid #9b9bf9;outline-of
   .image-generator { padding: 10px; gap: 8px; }
   .composer-image-preview img { max-width: 112px; max-height: 82px; }
 }
+
+
+/* Lumina AI compact image panel fix v2 */
+.image-generator {
+  display: contents !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 0 !important;
+}
+.image-generator > h2,
+.image-generator > p,
+.image-generator > textarea,
+.image-generator > div:not(.generated-image-result) {
+  display: none !important;
+}
+.image-generator > button:first-of-type {
+  display: inline-flex !important;
+  width: auto !important;
+  min-height: 38px !important;
+  margin: 6px 0 !important;
+}
+.image-generator > button:not(:first-of-type) {
+  display: none !important;
+}
+.image-generator .generated-image-result {
+  display: block !important;
+  max-width: 100%;
+  margin: 10px 0;
+}
+.image-generator .generated-image-result img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 14px;
+}
