@@ -6,6 +6,24 @@ import { GoogleGenAI } from '@google/genai';
 
 dotenv.config();
 const app = express();
+
+/* Lumina AI request timing diagnostics */
+app.use((req, res, next) => {
+  const startedAt = Date.now();
+  res.on('finish', () => {
+    console.log(
+      '[REQUEST_TIMING]',
+      JSON.stringify({
+        method: req.method,
+        path: req.path,
+        status: res.statusCode,
+        durationMs: Date.now() - startedAt
+      })
+    );
+  });
+  next();
+});
+
 const port = Number(process.env.PORT || 3000);
 
 let quotaCooldownUntil = 0;
