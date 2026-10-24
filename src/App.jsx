@@ -369,8 +369,73 @@ export default function App() {
         )}
     {generatedImage && (
       <div className="generated-image-result">
-        <img src={generatedImage} alt={imagePrompt || 'AI द्वारा बनाई गई तस्वीर'} />
-        <a href={generatedImage} download="lumina-ai-image.png">तस्वीर डाउनलोड करें</a>
+        <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:12}}>
+          <button type="button" onClick={async () => {
+            try {
+              if (navigator.share) {
+                const r = await fetch(generatedImage);
+                const blob = await r.blob();
+                const file = new File([blob], 'lumina-ai-image.png', {type: blob.type || 'image/png'});
+                if (!navigator.canShare || navigator.canShare({files:[file]})) {
+                  await navigator.share({files:[file], title:'Lumina AI Image'});
+                } else {
+                  await navigator.share({title:'Lumina AI Image', url:generatedImage});
+                }
+              } else {
+                await navigator.clipboard.writeText(generatedImage);
+                setNotice('तस्वीर का लिंक कॉपी हो गया।');
+              }
+            } catch (e) {
+              if (e.name !== 'AbortError') setNotice('Share नहीं हो पाया। Save बटन इस्तेमाल करें।');
+            }
+          }}>📤 Share</button>
+          <button type="button" onClick={async () => {
+            try {
+              const r = await fetch(generatedImage);
+              const blob = await r.blob();
+              if (navigator.clipboard && window.ClipboardItem && navigator.clipboard.write) {
+                await navigator.clipboard.write([new ClipboardItem({[blob.type || 'image/png']:blob})]);
+                setNotice('तस्वीर कॉपी हो गई।');
+              } else {
+                await navigator.clipboard.writeText(generatedImage);
+                setNotice('तस्वीर का लिंक कॉपी हो गया।');
+              }
+            } catch (e) {
+              try {
+                await navigator.clipboard.writeText(generatedImage);
+                setNotice('तस्वीर का लिंक कॉपी हो गया।');
+              } catch {
+                setNotice('Copy नहीं हो पाया। Save बटन इस्तेमाल करें।');
+              }
+            }
+          }}>📋 Copy</button>
+          <a href={generatedImage} download="lumina-ai-image.png"
+             onClick={async e => {
+               if (generatedImage.startsWith('data:')) return;
+               e.preventDefault();
+               try {
+                 const r = await fetch(generatedImage);
+                 if (!r.ok) throw new Error('Download failed');
+                 const blob = await r.blob();
+                 const url = URL.createObjectURL(blob);
+                 const a = document.createElement('a');
+                 a.href = url;
+                 a.download = 'lumina-ai-image.png';
+                 document.body.appendChild(a);
+                 a.click();
+                 a.remove();
+                 setTimeout(() => URL.revokeObjectURL(url), 1500);
+               } catch {
+                 window.open(generatedImage, '_blank', 'noopener');
+                 setNotice('तस्वीर नए टैब में खुली है। वहाँ से डाउनलोड करें।');
+               }
+             }}
+             style={{display:'inline-flex',alignItems:'center',padding:'8px 12px',borderRadius:10,textDecoration:'none'}}>
+             ⬇️ Save / Download
+          </a>
+        </div>
+        <img src={generatedImage} alt={imagePrompt || 'AI द्वारा बनाई गई तस्वीर'}
+             style={{display:'block',maxWidth:'100%',height:'auto'}} />
       </div>
     )}
   </section>
