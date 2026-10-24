@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './LuminaAvatar.css';
 
 export default function LuminaAvatar() {
@@ -10,6 +10,41 @@ export default function LuminaAvatar() {
 
   const outfits = ['Default', 'Casual', 'Royal'];
   const faces = ['😊', '😎', '😉'];
+
+  // lumina-voice-sync: sync avatar mouth with audio playback
+  useEffect(() => {
+    let audioPlaying = false;
+    const start = () => {
+      audioPlaying = true;
+      setSpeaking(true);
+    };
+    const stop = () => {
+      audioPlaying = false;
+      setSpeaking(false);
+    };
+    const checkSpeech = () => {
+      if (window.speechSynthesis && window.speechSynthesis.speaking) {
+        setSpeaking(true);
+      } else if (!audioPlaying) {
+        setSpeaking(false);
+      }
+    };
+    document.addEventListener('play', start, true);
+    document.addEventListener('playing', start, true);
+    document.addEventListener('ended', stop, true);
+    document.addEventListener('pause', stop, true);
+    document.addEventListener('error', stop, true);
+    const timer = window.setInterval(checkSpeech, 180);
+    return () => {
+      document.removeEventListener('play', start, true);
+      document.removeEventListener('playing', start, true);
+      document.removeEventListener('ended', stop, true);
+      document.removeEventListener('pause', stop, true);
+      document.removeEventListener('error', stop, true);
+      window.clearInterval(timer);
+    };
+  }, []);
+
 
   return (
     <section className="lumina-avatar" style={{ '--avatar-color': color }}>
