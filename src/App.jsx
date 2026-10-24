@@ -158,7 +158,10 @@ export default function App() {
         {role:'assistant', text:data.answer.trim(), id:Date.now()+1}
       ]);
       if (voiceModeRef.current) {
-      const answerText = data.answer.trim();
+      const answerText = data.answer.trim()
+        .replace(/[?？]+/g, ' ')
+        .replace(/([.,!?;:，。！？；：])+/g, ' ')
+        .replace(/\s+/g, ' ').trim();
       fetch("https://muvixa-lumina-backend-8417.onrender.com/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -294,12 +297,23 @@ export default function App() {
       const rec = new SR();
       voiceRecRef.current = rec;
       rec.lang = 'hi-IN';
-      rec.continuous = false;
-      rec.interimResults = false;
+      rec.continuous = true;
+      rec.interimResults = true;
       rec.onstart = () => setListening(true);
+      let finalTranscript = '';
       rec.onresult = e => {
-        const spoken = e.results?.[0]?.[0]?.transcript?.trim();
-        if (spoken && voiceModeRef.current) sendMessage(spoken);
+        let interim = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const part = e.results[i][0]?.transcript || '';
+          if (e.results[i].isFinal) finalTranscript += part + ' ';
+          else interim += part;
+        }
+        if (interim.trim()) setNotice('सुन रहा हूँ: ' + interim.trim());
+        if (finalTranscript.trim() && voiceModeRef.current) {
+          const spoken = finalTranscript.trim();
+          finalTranscript = '';
+          sendMessage(spoken);
+        }
       };
       rec.onerror = () => setListening(false);
       rec.onend = () => setListening(false);
