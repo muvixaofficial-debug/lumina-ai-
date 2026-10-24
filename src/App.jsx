@@ -92,6 +92,9 @@ export default function App() {
   const [notice,setNotice] = useState('');
   const [listening,setListening] = useState(false);
   const [voiceMode,setVoiceMode] = useState(false);
+  const [cloudCompact,setCloudCompact] = useState(false);
+  const [cloudBoost,setCloudBoost] = useState(false);
+  const cloudTouchY = useRef(0);
   const voiceRecRef = useRef(null);
   const voiceModeRef = useRef(false);
   const [profileOpen,setProfileOpen] = useState(false);
@@ -330,7 +333,7 @@ export default function App() {
   }
 
   return <div className="app-shell">
-    {voiceMode && <div className="lumina-cloud-overlay" aria-live="polite"><div className="lumina-cloud-orb" aria-label="Lumina सुन रहा है"><span></span><i></i><b></b></div><p>Lumina सुन रहा है…</p></div>}
+    {voiceMode && <div className={'lumina-cloud-overlay '+(cloudCompact?'compact':'')} aria-live="polite"><div className="lumina-cloud-stage" onTouchStart={e=>{cloudTouchY.current=e.touches[0].clientY;}} onTouchEnd={e=>{const dy=e.changedTouches[0].clientY-cloudTouchY.current;if(dy>55)setCloudCompact(true);else if(dy< -55)setCloudCompact(false);}}><div className={'lumina-cloud-orb '+(cloudBoost?'boost':'')} role="button" tabIndex="0" aria-label="Lumina cloud; touch to animate" onClick={()=>{setCloudBoost(true);setTimeout(()=>setCloudBoost(false),1100);}} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setCloudBoost(true);setTimeout(()=>setCloudBoost(false),1100);}}}><span></span><i></i><b></b><em></em><strong></strong></div><div className="lumina-cloud-ring ring-one"></div><div className="lumina-cloud-ring ring-two"></div></div><p>Lumina सुन रहा है…</p><button type="button" className="lumina-cloud-mic-stop" aria-label="आवाज़ बंद करें" onClick={voiceInput}><Icon name="mic" size={25}/></button></div>}
       <header className="topbar">
       <button className="icon-button header-menu" aria-label="मेनू खोलें" onClick={()=>{setMenu(true);setProfileOpen(false);}}>
         <Icon name="menu" size={24}/>
