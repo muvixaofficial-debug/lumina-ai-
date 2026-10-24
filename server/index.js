@@ -124,14 +124,14 @@ app.post('/api/chat', async (req, res) => {
       parts: [{ text: message }]
     });
 
-    const ai = new GoogleGenAI({ apiKey: key, httpOptions: { timeout: 45000 } });
+    const ai = new GoogleGenAI({ apiKey: key, httpOptions: { timeout: 25000 } });
 
     let result;
     let lastError;
-    for (let attempt = 1; attempt <= 2; attempt++) {
+    for (let attempt = 1; attempt <= 1; attempt++) {
       try {
         result = await ai.models.generateContent({
-          model: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
+          model: 'gemini-3.5-flash-lite',
           contents,
           config: {
             systemInstruction: modeInstructions[mode]
