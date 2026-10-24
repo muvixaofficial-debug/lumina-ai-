@@ -286,6 +286,7 @@ export default function App() {
 
   function startVoiceListening() {
   if (!voiceModeRef.current || isLoading) return;
+
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
     setNotice('इस ब्राउज़र में Voice AI उपलब्ध नहीं है। Chrome इस्तेमाल करें।');
@@ -293,6 +294,7 @@ export default function App() {
     setVoiceMode(false);
     return;
   }
+
   try {
     const rec = new SR();
     voiceRecRef.current = rec;
@@ -300,15 +302,16 @@ export default function App() {
     rec.continuous = true;
     rec.interimResults = true;
 
-    let finalText = '';
-    let interimText = '';
     let timer = null;
     let sent = false;
+    let finalText = '';
+    let interimText = '';
 
     const flush = () => {
       if (sent || !voiceModeRef.current) return;
-      const spoken = (finalText + ' ' + interimText).replace(/\\s+/g, ' ').trim();
+      const spoken = (finalText || interimText).replace(/\s+/g, ' ').trim();
       if (spoken.length < 2) return;
+
       sent = true;
       if (timer) clearTimeout(timer);
       finalText = '';
@@ -318,29 +321,45 @@ export default function App() {
     };
 
     rec.onstart = () => setListening(true);
+
     rec.onresult = e => {
-      interimText = '';
-      for (let i = e.resultIndex; i < e.results.length; i++) {
+      // हर event पर पूरी result list दोबारा पढ़ें, ताकि पुराने शब्द जुड़कर दोहरें नहीं।
+      const finals = [];
+      const interims = [];
+
+      for (let i = 0; i < e.results.length; i++) {
         const result = e.results[i];
-        const part = result[0]?.transcript || '';
-        if (result.isFinal) finalText += part + ' ';
-        else interimText += part;
+        const part = (result[0]?.transcript || '').trim();
+        if (!part) continue;
+
+        if (result.isFinal) finals.push(part);
+        else interims.push(part);
       }
-      const preview = (finalText + ' ' + interimText).trim();
+
+      finalText = finals.join(' ').trim();
+      interimText = interims.join(' ').trim();
+
+      const preview = (finalText || interimText).replace(/\s+/g, ' ').trim();
       if (preview) setNotice('सुन रहा हूँ: ' + preview);
+
       if (timer) clearTimeout(timer);
-      if (preview) timer = setTimeout(flush, 1600);
+      if (preview) timer = setTimeout(flush, 1200);
     };
+
     rec.onerror = e => {
       setListening(false);
-      if (e.error !== 'no-speech' && e.error !== 'aborted')
+      if (timer) clearTimeout(timer);
+      if (e.error !== 'no-speech' && e.error !== 'aborted') {
         setNotice('माइक में समस्या हुई। दोबारा बोलें।');
+      }
     };
+
     rec.onend = () => {
       setListening(false);
       if (timer) clearTimeout(timer);
       flush();
     };
+
     rec.start();
   } catch {
     setListening(false);
