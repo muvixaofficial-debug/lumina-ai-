@@ -252,3 +252,18 @@ button:focus-visible,textarea:focus-visible{outline:2px solid #9b9bf9;outline-of
 @keyframes cloud-tap-burst{0%,100%{transform:scale(1)}25%{transform:scale(1.15) rotate(-5deg)}50%{transform:scale(.94) rotate(5deg)}75%{transform:scale(1.1) rotate(-3deg)}}
 @keyframes cloud-mic-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 @media(prefers-reduced-motion:reduce){.lumina-cloud-overlay,.lumina-cloud-orb,.lumina-cloud-ring,.lumina-cloud-mic-stop{animation:none}}
+
+/* Compact Gemini-style photo composer */
+.image-generator{display:contents}
+.image-generator>h2,
+.image-generator>p,
+.image-generator>button,
+.image-generator>textarea,
+.image-generator>div:not(.generated-image-result){display:none!important}
+.composer{flex-wrap:wrap;align-items:flex-end;gap:7px;padding:10px 12px;border-radius:28px}
+.composer textarea{flex:1 1 120px;min-width:0;min-height:42px;max-height:150px;align-self:stretch;padding:10px 2px}
+.composer-image-preview{position:relative;flex:0 0 100%;width:100%;padding:2px 0 5px 2px}
+.composer-image-preview img{display:block;width:auto;height:auto;max-width:120px;max-height:88px;object-fit:cover;border-radius:13px}
+.composer-image-preview button{position:absolute;left:105px;top:-3px;width:27px;height:27px;border:0;border-radius:50%;background:#fff;color:#222;font-size:23px;line-height:1}
+.composer-wrap>.disclaimer{display:none!important}
+@media(max-width:600px){.composer-wrap{padding-top:6px}.composer{gap:5px}.composer-image-preview img{max-width:112px;max-height:82px}}

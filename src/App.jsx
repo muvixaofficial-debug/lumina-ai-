@@ -619,7 +619,7 @@ const answerText = String(data.answer ?? '').trim()
         </button>)}
       </div></>}
       <div className="composer">
-        {activeMode !== 'chat' && (() => {
+        {activeMode !== 'chat' && activeMode !== 'image' && (() => {
           const selectedTool = tools.find(tool => tool.id === activeMode);
           return selectedTool ? <div className="mode-chip" title={selectedTool.title}>
             <span className="mode-chip-icon"><Icon name={selectedTool.icon} size={18}/></span>
@@ -627,10 +627,11 @@ const answerText = String(data.answer ?? '').trim()
             <button className="mode-chip-remove" aria-label="चुना हुआ मोड हटाएँ" onClick={() => { setActiveMode('chat'); setNotice(''); }}><Icon name="close" size={16}/></button>
           </div> : null;
         })()}
-        <button className="plus-btn" aria-label="टूल जोड़ें" onClick={()=>setPlus(!plus)}><Icon name={plus?'close':'plus'} size={24}/></button>
-        <textarea rows="1" value={message} placeholder="Message Lumina AI" aria-label="अपना संदेश लिखें" onChange={e=>setMessage(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}}/>
+        <button className="plus-btn" aria-label="फोटो जोड़ें" onClick={()=>{setPlus(false);setNotice('');if(activeMode!=='image')setActiveMode('image');setTimeout(()=>imageUploadRef.current?.click(),120);}}><Icon name="plus" size={24}/></button>
+        {activeMode === 'image' && selectedImage && <div className="composer-image-preview"><img src={selectedImage} alt="चुनी हुई फोटो"/><button type="button" aria-label="फोटो हटाएँ" onClick={()=>{setSelectedImage('');setSelectedImageName('');if(imageUploadRef.current)imageUploadRef.current.value='';}}>×</button></div>}
+        <textarea rows="1" value={activeMode === 'image' ? imagePrompt : message} placeholder={activeMode === 'image' ? 'तस्वीर का वर्णन करें' : 'Message Lumina AI'} aria-label="अपना संदेश लिखें" onChange={e=>activeMode === 'image' ? setImagePrompt(e.target.value) : setMessage(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();activeMode==='image'?generateImage():sendMessage();}}}/>
         <button className={'mic-btn '+((listening||voiceMode)?'listening':'')} aria-label={voiceMode?'Voice बंद करें':'Voice चालू करें'} onClick={voiceInput}><Icon name="mic" size={21}/></button>
-        {message.trim() && <button className="send-btn" aria-label="भेजें" disabled={isLoading} onClick={sendMessage}><Icon name="send" size={22}/></button>}
+        {(activeMode==='image'?imagePrompt.trim():message.trim()) && <button className="send-btn" aria-label="भेजें" disabled={isLoading||imageLoading} onClick={()=>activeMode==='image'?generateImage():sendMessage()}><Icon name="send" size={22}/></button>}
       </div>
       <p className="disclaimer">Lumina AI गलतियाँ कर सकता है। ज़रूरी जानकारी जाँच लें।</p>
       <input ref={fileRef} type="file" accept="image/*,application/pdf,.txt,.doc,.docx" hidden onChange={e=>{
