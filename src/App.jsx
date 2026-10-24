@@ -140,7 +140,8 @@ export default function App() {
         {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({message:text, history:previousHistory, mode:activeMode})
+          body: JSON.stringify({message:text, history:previousHistory, mode:activeMode}),
+          signal: AbortSignal.timeout(90000)
         }
       );
 
@@ -238,7 +239,8 @@ const answerText = String(data.answer ?? '').trim()
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt, image: selectedImage || undefined })
+          body: JSON.stringify({ prompt, image: selectedImage || undefined }),
+          signal: AbortSignal.timeout(120000)
         }
       );
 
@@ -354,6 +356,7 @@ const answerText = String(data.answer ?? '').trim()
       if (spoken.length < 2) return;
 
       sent = true;
+      voiceRetryRef.current = 0;
       setNotice('आपने कहा: ' + spoken);
       setListening(false);
       try { rec.stop(); } catch {}
@@ -630,7 +633,34 @@ const answerText = String(data.answer ?? '').trim()
         {message.trim() && <button className="send-btn" aria-label="भेजें" disabled={isLoading} onClick={sendMessage}><Icon name="send" size={22}/></button>}
       </div>
       <p className="disclaimer">Lumina AI गलतियाँ कर सकता है। ज़रूरी जानकारी जाँच लें।</p>
-      <input ref={fileRef} type="file" accept="image/*,application/pdf,.txt,.doc,.docx" hidden onChange={e=>{const file=e.target.files?.[0];if(file)setNotice('फ़ाइल चुनी गई: '+file.name+'। फ़ाइल पढ़ने की सुविधा जोड़ना बाकी है।');e.target.value='';}}/>
+      <input ref={fileRef} type="file" accept="image/*,application/pdf,.txt,.doc,.docx" hidden onChange={e=>{
+      const file=e.target.files?.[0];
+      if(!file){e.target.value='';return;}
+      if(file.type.startsWith('image/')){
+        if(file.size>5*1024*1024){
+          setNotice('फोटो 5 MB से छोटी चुनें।');
+          e.target.value='';
+          return;
+        }
+        const reader=new FileReader();
+        reader.onload=()=>{
+          const result=String(reader.result||'');
+          if(!result.startsWith('data:image/')){
+            setNotice('फोटो पढ़ी नहीं जा सकी। दूसरी फोटो चुनें।');
+            return;
+          }
+          setSelectedImage(result);
+          setSelectedImageName(file.name);
+          setActiveMode('image');
+          setNotice('फोटो तैयार है। अब विवरण लिखकर AI से एडिट कराएँ।');
+        };
+        reader.onerror=()=>setNotice('फोटो पढ़ी नहीं जा सकी। दूसरी फोटो चुनें।');
+        reader.readAsDataURL(file);
+      }else{
+        setNotice('फ़ाइल चुनी गई: '+file.name+'। अभी फोटो एडिटिंग उपलब्ध है; इस फ़ाइल का टेक्स्ट पढ़ना अभी समर्थित नहीं है।');
+      }
+      e.target.value='';
+    }}/>
     </footer>
   </div>;
 }
