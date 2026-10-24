@@ -1,0 +1,194 @@
+.lumina-avatar {
+  --avatar-color: #8b5cf6;
+  width: 100%;
+  color: #f8fafc;
+  font-family: inherit;
+}
+.lumina-avatar-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 12px 0;
+}
+.lumina-avatar button,
+.lumina-avatar select {
+  min-height: 42px;
+  border: 1px solid #ffffff25;
+  border-radius: 12px;
+  padding: 8px 12px;
+  background: #ffffff0d;
+  color: inherit;
+  font: inherit;
+}
+.lumina-avatar select option { color: #111827; }
+.lumina-avatar button[aria-pressed="true"] {
+  border-color: var(--avatar-color);
+  background: color-mix(in srgb, var(--avatar-color) 24%, transparent);
+}
+.lumina-avatar label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+}
+.lumina-avatar input[type="color"] {
+  width: 38px;
+  height: 38px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+.lumina-avatar-stage {
+  min-height: 330px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 24px;
+  background: radial-gradient(ellipse at center, #312e8155, #09090f 72%);
+}
+.lumina-avatar-glow {
+  position: absolute;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  background: var(--avatar-color);
+  opacity: .18;
+  filter: blur(42px);
+  animation: lumina-float 3s ease-in-out infinite;
+}
+.lumina-anime {
+  position: relative;
+  width: 150px;
+  height: 225px;
+  z-index: 1;
+  animation: lumina-float 3s ease-in-out infinite;
+}
+.anime-hair {
+  position: absolute;
+  z-index: 2;
+  top: 8px;
+  left: 25px;
+  width: 100px;
+  height: 103px;
+  border-radius: 48% 48% 35% 35%;
+  background: linear-gradient(120deg, #101321, #34344b);
+  box-shadow: inset -10px 0 #ffffff10;
+}
+.anime-hair::before,
+.anime-hair::after {
+  content: "";
+  position: absolute;
+  top: 48px;
+  width: 24px;
+  height: 75px;
+  background: #20243a;
+  border-radius: 10px 10px 20px 20px;
+}
+.anime-hair::before { left: 0; transform: rotate(8deg); }
+.anime-hair::after { right: 0; transform: rotate(-8deg); }
+.hair-fringe {
+  position: absolute;
+  top: 0;
+  left: 23px;
+  width: 48px;
+  height: 55px;
+  background: #20243a;
+  border-radius: 0 0 60% 30%;
+  transform: rotate(12deg);
+}
+.anime-face {
+  position: absolute;
+  top: 38px;
+  left: 38px;
+  width: 74px;
+  height: 86px;
+  z-index: 3;
+  border-radius: 42% 42% 48% 48%;
+  background: linear-gradient(130deg, #ffe2d3, #eab8a8);
+  border: 1px solid #d99c92;
+}
+.anime-eyes {
+  display: flex;
+  justify-content: space-around;
+  padding-top: 28px;
+  color: #28213c;
+  font-size: 15px;
+}
+.anime-blush {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 7px 0;
+}
+.anime-blush i {
+  width: 13px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f28a9c;
+  opacity: .65;
+}
+.anime-mouth {
+  text-align: center;
+  margin-top: -1px;
+  color: #9c4256;
+  font-size: 17px;
+}
+.anime-neck {
+  position: absolute;
+  top: 112px;
+  left: 62px;
+  width: 28px;
+  height: 26px;
+  background: #e8b4a2;
+}
+.anime-clothes {
+  position: absolute;
+  top: 128px;
+  left: 15px;
+  width: 120px;
+  height: 85px;
+  border-radius: 45px 45px 15px 15px;
+  background: linear-gradient(130deg, var(--avatar-color), #25204e);
+  clip-path: polygon(20% 0, 40% 0, 50% 15%, 60% 0, 80% 0, 100% 28%, 85% 100%, 15% 100%, 0 28%);
+}
+.clothes-detail {
+  position: absolute;
+  top: 9px;
+  left: 57px;
+  width: 2px;
+  height: 45px;
+  background: #ffffff65;
+}
+.boy .anime-hair { border-radius: 48% 48% 25% 25%; }
+.boy .anime-hair::before { height: 48px; }
+.boy .anime-face { border-radius: 40% 40% 38% 38%; }
+.outfit-1 .anime-clothes { background: linear-gradient(130deg, #0ea5e9, #164e63); }
+.outfit-2 .anime-clothes { background: linear-gradient(130deg, #f59e0b, #7c2d12); }
+.is-speaking .anime-mouth {
+  animation: lumina-mouth .22s ease-in-out infinite alternate;
+}
+.is-speaking .anime-eyes {
+  animation: lumina-blink 3s infinite;
+}
+.lumina-avatar-name { z-index: 1; font-weight: 700; margin-top: 4px; }
+.lumina-avatar-status { z-index: 1; color: #c4b5fd; font-size: 13px; margin-top: 4px; }
+.lumina-avatar-note { text-align: center; color: #a1a1aa; font-size: 12px; }
+@keyframes lumina-float {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-9px); }
+}
+@keyframes lumina-mouth {
+  from { transform: scaleY(.6); }
+  to { transform: scaleY(1.5); }
+}
+@keyframes lumina-blink {
+  0%,46%,50%,100% { opacity: 1; }
+  48% { opacity: .15; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lumina-avatar * { animation: none !important; }
+}

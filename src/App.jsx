@@ -1,3 +1,4 @@
+import LuminaAvatar from './components/LuminaAvatar';
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -154,15 +155,44 @@ export default function App() {
         ...old,
         {role:'assistant', text:data.answer.trim(), id:Date.now()+1}
       ]);
-      if (voiceModeRef.current && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(data.answer.trim());
-        utterance.lang = 'hi-IN';
-        utterance.onend = () => {
-          if (voiceModeRef.current) startVoiceListening();
-        };
-        window.speechSynthesis.speak(utterance);
-      }
+      if (voiceModeRef.current) {
+      const answerText = data.answer.trim();
+      fetch("https://muvixa-lumina-backend-8417.onrender.com/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: answerText })
+      })
+        .then(async response => {
+          if (!response.ok) throw new Error("TTS unavailable");
+          return response.blob();
+        })
+        .then(blob => {
+          if (!voiceModeRef.current) return;
+          const audioUrl = URL.createObjectURL(blob);
+          const audio = new Audio(audioUrl);
+          audio.onended = () => {
+            URL.revokeObjectURL(audioUrl);
+            if (voiceModeRef.current) setTimeout(() => startVoiceListening(), 350);
+          };
+          audio.onerror = () => {
+            URL.revokeObjectURL(audioUrl);
+            if (voiceModeRef.current) startVoiceListening();
+          };
+          audio.play().catch(() => {
+            URL.revokeObjectURL(audioUrl);
+            if (voiceModeRef.current) startVoiceListening();
+          });
+        })
+        .catch(() => {
+          if (!voiceModeRef.current) return;
+          const utterance = new SpeechSynthesisUtterance(answerText);
+          utterance.lang = "hi-IN";
+          utterance.onend = () => {
+            if (voiceModeRef.current) setTimeout(() => startVoiceListening(), 350);
+          };
+          window.speechSynthesis.speak(utterance);
+        });
+    }
     } catch (error) {
       const errorMessage = error.message || '';
       setNotice(
@@ -310,6 +340,8 @@ export default function App() {
         <span>L</span>
       </button>
     </header>
+
+    <section className="lumina-avatar-home"><LuminaAvatar /></section>
 
     {profileOpen&&<div className="profile-popover">
       <div className="profile-pop-head"><span className="avatar">L</span><span><b>Lumina User</b><small>Free plan</small></span></div>
