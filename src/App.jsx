@@ -627,7 +627,7 @@ const answerText = String(data.answer ?? '').trim()
             <button className="mode-chip-remove" aria-label="चुना हुआ मोड हटाएँ" onClick={() => { setActiveMode('chat'); setNotice(''); }}><Icon name="close" size={16}/></button>
           </div> : null;
         })()}
-        <button className="plus-btn" aria-label="फोटो जोड़ें" onClick={()=>{setPlus(false);setNotice('');if(activeMode!=='image')setActiveMode('image');setTimeout(()=>imageUploadRef.current?.click(),120);}}><Icon name="plus" size={24}/></button>
+        <button className="plus-btn" aria-label="टूल जोड़ें" onClick={()=>setPlus(!plus)}><Icon name={plus?'close':'plus'} size={24}/></button>
         {activeMode === 'image' && selectedImage && <div className="composer-image-preview"><img src={selectedImage} alt="चुनी हुई फोटो"/><button type="button" aria-label="फोटो हटाएँ" onClick={()=>{setSelectedImage('');setSelectedImageName('');if(imageUploadRef.current)imageUploadRef.current.value='';}}>×</button></div>}
         <textarea rows="1" value={activeMode === 'image' ? imagePrompt : message} placeholder={activeMode === 'image' ? 'तस्वीर का वर्णन करें' : 'Message Lumina AI'} aria-label="अपना संदेश लिखें" onChange={e=>activeMode === 'image' ? setImagePrompt(e.target.value) : setMessage(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();activeMode==='image'?generateImage():sendMessage();}}}/>
         <button className={'mic-btn '+((listening||voiceMode)?'listening':'')} aria-label={voiceMode?'Voice बंद करें':'Voice चालू करें'} onClick={voiceInput}><Icon name="mic" size={21}/></button>

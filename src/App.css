@@ -257,7 +257,7 @@ button:focus-visible,textarea:focus-visible{outline:2px solid #9b9bf9;outline-of
 .image-generator{display:contents}
 .image-generator>h2,
 .image-generator>p,
-.image-generator>button,
+.image-generator>button:nth-of-type(2),
 .image-generator>textarea,
 .image-generator>div:not(.generated-image-result){display:none!important}
 .composer{flex-wrap:wrap;align-items:flex-end;gap:7px;padding:10px 12px;border-radius:28px}
@@ -267,3 +267,6 @@ button:focus-visible,textarea:focus-visible{outline:2px solid #9b9bf9;outline-of
 .composer-image-preview button{position:absolute;left:105px;top:-3px;width:27px;height:27px;border:0;border-radius:50%;background:#fff;color:#222;font-size:23px;line-height:1}
 .composer-wrap>.disclaimer{display:none!important}
 @media(max-width:600px){.composer-wrap{padding-top:6px}.composer{gap:5px}.composer-image-preview img{max-width:112px;max-height:82px}}
+
+/* Show gallery choice after opening Image Generation */
+.image-generator>button:nth-of-type(1){display:inline-flex!important}
