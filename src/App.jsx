@@ -97,6 +97,7 @@ export default function App() {
   const cloudTouchY = useRef(0);
   const voiceRecRef = useRef(null);
   const voiceModeRef = useRef(false);
+  const voiceRetryRef = useRef(0);
   const [profileOpen,setProfileOpen] = useState(false);
   const [history,setHistory] = useState([]);
   const fileRef = useRef(null);
@@ -369,7 +370,15 @@ const answerText = String(data.answer ?? '').trim()
     rec.onend = () => {
       setListening(false);
       if (!sent && voiceModeRef.current) {
-        setNotice('आवाज़ साफ़ नहीं मिली। Voice बटन दबाकर दोबारा बोलें।');
+        if (voiceRetryRef.current < 2) {
+          voiceRetryRef.current += 1;
+          setTimeout(() => {
+            if (voiceModeRef.current && !isLoading) startVoiceListening();
+          }, 700);
+        } else {
+          voiceRetryRef.current = 0;
+          setNotice('आवाज़ नहीं मिली। Voice बटन दबाकर दोबारा बोलें।');
+        }
       }
     };
 
