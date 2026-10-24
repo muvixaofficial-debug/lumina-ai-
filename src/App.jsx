@@ -1,4 +1,3 @@
-import LuminaAvatar from './components/LuminaAvatar';
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -331,7 +330,8 @@ export default function App() {
   }
 
   return <div className="app-shell">
-    <header className="topbar">
+    {voiceMode && <div className="lumina-cloud-overlay" aria-live="polite"><div className="lumina-cloud-orb" aria-label="Lumina सुन रहा है"><span></span><i></i><b></b></div><p>Lumina सुन रहा है…</p></div>}
+      <header className="topbar">
       <button className="icon-button header-menu" aria-label="मेनू खोलें" onClick={()=>{setMenu(true);setProfileOpen(false);}}>
         <Icon name="menu" size={24}/>
       </button>
@@ -341,7 +341,6 @@ export default function App() {
       </button>
     </header>
 
-    <section className="lumina-avatar-home"><LuminaAvatar /></section>
 
     {profileOpen&&<div className="profile-popover">
       <div className="profile-pop-head"><span className="avatar">L</span><span><b>Lumina User</b><small>Free plan</small></span></div>
@@ -545,8 +544,8 @@ export default function App() {
         })()}
         <button className="plus-btn" aria-label="टूल जोड़ें" onClick={()=>setPlus(!plus)}><Icon name={plus?'close':'plus'} size={24}/></button>
         <textarea rows="1" value={message} placeholder="Message Lumina AI" aria-label="अपना संदेश लिखें" onChange={e=>setMessage(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}}/>
-        <button className={'mic-btn '+(listening?'listening':'')} aria-label="बोलकर लिखें" onClick={voiceInput}><Icon name="mic" size={21}/></button>
-        {message.trim()?<button className="send-btn" aria-label="भेजें" disabled={isLoading} onClick={sendMessage}><Icon name="send" size={22}/></button>:<button className={'voice-btn '+(voiceMode?'listening':'')} aria-label={voiceMode?'Voice बंद करें':'Voice बातचीत चालू करें'} onClick={voiceInput}><Waveform/></button>}
+        <button className={'mic-btn '+((listening||voiceMode)?'listening':'')} aria-label={voiceMode?'Voice बंद करें':'Voice चालू करें'} onClick={voiceInput}><Icon name="mic" size={21}/></button>
+        {message.trim() && <button className="send-btn" aria-label="भेजें" disabled={isLoading} onClick={sendMessage}><Icon name="send" size={22}/></button>}
       </div>
       <p className="disclaimer">Lumina AI गलतियाँ कर सकता है। ज़रूरी जानकारी जाँच लें।</p>
       <input ref={fileRef} type="file" accept="image/*,application/pdf,.txt,.doc,.docx" hidden onChange={e=>{const file=e.target.files?.[0];if(file)setNotice('फ़ाइल चुनी गई: '+file.name+'। फ़ाइल पढ़ने की सुविधा जोड़ना बाकी है।');e.target.value='';}}/>

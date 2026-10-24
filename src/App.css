@@ -203,3 +203,58 @@ button:focus-visible,textarea:focus-visible{outline:2px solid #9b9bf9;outline-of
   text-decoration: none;
   font-weight: 700;
 }
+
+
+/* Lumina animated blue voice cloud */
+.lumina-cloud-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 24px 16px 110px;
+  background: radial-gradient(ellipse at 50% 75%, rgba(31,74,180,.24), rgba(7,9,28,.88) 72%);
+  pointer-events: none;
+  animation: lumina-cloud-fade-in .45s ease-out both;
+}
+.lumina-cloud-overlay p {
+  color: #dceaff;
+  font-size: 15px;
+  margin: 18px 0 0;
+  letter-spacing: .4px;
+}
+.lumina-cloud-orb {
+  position: relative;
+  width: min(58vw, 230px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at 35% 30%, rgba(208,239,255,.95), transparent 23%),
+    radial-gradient(ellipse at 65% 63%, #3c8bff 0%, #2352d9 38%, #15216b 68%, #090e32 80%);
+  box-shadow: 0 0 35px rgba(49,127,255,.75), 0 0 90px rgba(39,88,255,.42), inset -15px -20px 35px rgba(4,8,45,.65), inset 10px 8px 25px rgba(178,225,255,.45);
+  animation: lumina-cloud-rise .75s cubic-bezier(.2,.8,.2,1) both, lumina-cloud-float 3.8s ease-in-out .75s infinite;
+}
+.lumina-cloud-orb span, .lumina-cloud-orb i, .lumina-cloud-orb b {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #b9edff, #428cff 48%, #2545bb 78%);
+  box-shadow: 0 0 24px rgba(82,169,255,.55);
+}
+.lumina-cloud-orb span { width: 46%; height: 46%; left: 4%; top: 24%; }
+.lumina-cloud-orb i { width: 55%; height: 55%; right: 4%; top: 18%; }
+.lumina-cloud-orb b { width: 70%; height: 38%; left: 15%; bottom: 15%; }
+@keyframes lumina-cloud-rise {
+  from { opacity: 0; transform: translateY(48px) scale(.86); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes lumina-cloud-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes lumina-cloud-float {
+  0%,100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.035); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lumina-cloud-overlay, .lumina-cloud-orb { animation: none; }
+}
