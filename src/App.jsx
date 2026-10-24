@@ -57,6 +57,19 @@ export default function App() {
   const [selectedImageName,setSelectedImageName] = useState('');
   const imageUploadRef = useRef(null);
   const [imageLoading,setImageLoading] = useState(false);
+  const [imageProgress,setImageProgress] = useState(0);
+
+  useEffect(() => {
+    if (!imageLoading) {
+      setImageProgress(generatedImage ? 100 : 0);
+      return;
+    }
+    setImageProgress(1);
+    const timer = setInterval(() => {
+      setImageProgress(p => p >= 95 ? 95 : Math.min(95, p + Math.max(1, Math.ceil((95-p)/12))));
+    }, 650);
+    return () => clearInterval(timer);
+  }, [imageLoading, generatedImage]);
   const [activeMode,setActiveMode] = useState('chat');
   const [messages,setMessages] = useState([]);
   const [isLoading,setIsLoading] = useState(false);
@@ -342,7 +355,18 @@ export default function App() {
     >
       {imageLoading ? 'तस्वीर बन रही है…' : (selectedImage ? '✨ मेरी फोटो AI से एडिट करें' : '🎨 नई तस्वीर बनाएँ')}
     </button>
-    {imageLoading && <p>कृपया प्रतीक्षा करें…</p>}
+    {imageLoading && (
+          <div style={{margin:'20px 0',padding:18,borderRadius:18,background:'rgba(130,100,255,0.10)'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <strong>✨ Creating your image</strong><strong>{imageProgress}%</strong>
+            </div>
+            <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={imageProgress}
+              style={{height:10,marginTop:14,borderRadius:99,background:'rgba(140,140,160,.25)',overflow:'hidden'}}>
+              <div style={{width:imageProgress+'%',height:'100%',borderRadius:99,background:'linear-gradient(90deg,#8b5cf6,#38bdf8)',transition:'width .5s ease'}} />
+            </div>
+            <p>तस्वीर बन रही है, कृपया प्रतीक्षा करें…</p>
+          </div>
+        )}
     {generatedImage && (
       <div className="generated-image-result">
         <img src={generatedImage} alt={imagePrompt || 'AI द्वारा बनाई गई तस्वीर'} />
