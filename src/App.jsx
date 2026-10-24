@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import './App.css';
 
 const tools = [
@@ -8,7 +11,6 @@ const tools = [
   { id:'history', title:'Chat History', desc:'पुरानी बातचीत', icon:'history' },
   { id:'library', title:'Image Library', desc:'बनाई गई तस्वीरें', icon:'images' },
   { id:'image', title:'Image Generation', desc:'नई तस्वीर बनाएँ', icon:'image' },
-  { id:'video', title:'Video Generation', desc:'वीडियो बनाएँ', icon:'video' },
   { id:'coding', title:'Coding', desc:'कोड लिखें और ठीक करें', icon:'code' },
   { id:'camera', title:'Camera', desc:'कैमरे से तस्वीर लें', icon:'camera' },
   { id:'files', title:'Photos & Files', desc:'फोटो और फाइल जोड़ें', icon:'paperclip' },
@@ -28,7 +30,7 @@ function Icon({ name, size = 22, className = '' }) {
     history:<><path d="M3 12a9 9 0 1 0 2.6-6.4L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></>,
     images:<><rect x="3" y="4" width="15" height="15" rx="2"/><path d="m3 15 5-5 4 4 2-2 4 4"/><path d="M8 4v-1h12a2 2 0 0 1 2 2v12h-3"/><circle cx="13" cy="8" r="1"/></>,
     image:<><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></>,
-    video:<><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3z"/><path d="M7 3v3M12 3v3"/></>,
+
     code:<><path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 5l-4 14"/></>,
     camera:<><path d="M4 7h4l2-3h4l2 3h4a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><circle cx="12" cy="13" r="4"/></>,
     paperclip:<><path d="m8 12.5 6.7-6.7a3.2 3.2 0 0 1 4.5 4.5l-8.8 8.8a5 5 0 0 1-7.1-7.1l8.5-8.5"/><path d="m8 12.5 6.2-6.2"/></>,
@@ -210,7 +212,7 @@ export default function App() {
       setMenu(true);
       return;
     }
-    if (['coding','study','image','video','library','camera','files'].includes(tool.id)) {
+    if (['coding','study','image','library','camera','files'].includes(tool.id)) {
       setActiveMode(tool.id);
       if (tool.id === 'coding' || tool.id === 'study') {
         setNotice('');
@@ -227,7 +229,6 @@ export default function App() {
       }
       const notices = {
         image:'Image Generation चुना गया है, लेकिन तस्वीर बनाने की AI सेवा अभी कनेक्ट नहीं है।',
-        video:'Video Generation चुना गया है, लेकिन वीडियो बनाने की सेवा अभी कनेक्ट नहीं है।',
         library:'Image Library चुना गया है; लाइब्रेरी सेव करने की सुविधा अभी तैयार नहीं है।'
       };
       setNotice(notices[tool.id] || '');
@@ -306,7 +307,7 @@ export default function App() {
         <h1>What can I help with?</h1>
         <p>मुझसे कुछ भी पूछें।</p>
       </section>:<section className="messages">
-        {messages.map(m=><div className={`message-row ${m.role === 'assistant' ? 'assistant-row' : 'user-row'}`} key={m.id}><div className={m.role === 'assistant' ? 'assistant-bubble' : 'user-bubble'}>{m.role === 'assistant' ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.text}</ReactMarkdown> : m.text}</div></div>)}
+        {messages.map(m=><div className={`message-row ${m.role === 'assistant' ? 'assistant-row' : 'user-row'}`} key={m.id}><div className={m.role === 'assistant' ? 'assistant-bubble' : 'user-bubble'}>{m.role === 'assistant' ? <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>{m.text}</ReactMarkdown> : m.text}</div></div>)}
         {isLoading&&<div className="message-row assistant-row"><div className="assistant-bubble typing-indicator">Lumina AI सोच रहा है…</div></div>}
         <div ref={endRef}/>
       </section>}
