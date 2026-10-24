@@ -285,44 +285,68 @@ export default function App() {
   }
 
   function startVoiceListening() {
-    if (!voiceModeRef.current || isLoading) return;
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) {
-      setNotice('इस ब्राउज़र में Voice AI सुनने की सुविधा उपलब्ध नहीं है। Chrome इस्तेमाल करें।');
-      voiceModeRef.current = false;
-      setVoiceMode(false);
-      return;
-    }
-    try {
-      const rec = new SR();
-      voiceRecRef.current = rec;
-      rec.lang = 'hi-IN';
-      rec.continuous = true;
-      rec.interimResults = true;
-      rec.onstart = () => setListening(true);
-      let finalTranscript = '';
-      rec.onresult = e => {
-        let interim = '';
-        for (let i = e.resultIndex; i < e.results.length; i++) {
-          const part = e.results[i][0]?.transcript || '';
-          if (e.results[i].isFinal) finalTranscript += part + ' ';
-          else interim += part;
-        }
-        if (interim.trim()) setNotice('सुन रहा हूँ: ' + interim.trim());
-        if (finalTranscript.trim() && voiceModeRef.current) {
-          const spoken = finalTranscript.trim();
-          finalTranscript = '';
-          sendMessage(spoken);
-        }
-      };
-      rec.onerror = () => setListening(false);
-      rec.onend = () => setListening(false);
-      rec.start();
-    } catch {
-      setListening(false);
-      setNotice('माइक शुरू नहीं हुआ। दोबारा Voice बटन दबाएँ।');
-    }
+  if (!voiceModeRef.current || isLoading) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    setNotice('इस ब्राउज़र में Voice AI उपलब्ध नहीं है। Chrome इस्तेमाल करें।');
+    voiceModeRef.current = false;
+    setVoiceMode(false);
+    return;
   }
+  try {
+    const rec = new SR();
+    voiceRecRef.current = rec;
+    rec.lang = 'hi-IN';
+    rec.continuous = true;
+    rec.interimResults = true;
+
+    let finalText = '';
+    let interimText = '';
+    let timer = null;
+    let sent = false;
+
+    const flush = () => {
+      if (sent || !voiceModeRef.current) return;
+      const spoken = (finalText + ' ' + interimText).replace(/\\s+/g, ' ').trim();
+      if (spoken.length < 2) return;
+      sent = true;
+      if (timer) clearTimeout(timer);
+      finalText = '';
+      interimText = '';
+      try { rec.stop(); } catch {}
+      sendMessage(spoken);
+    };
+
+    rec.onstart = () => setListening(true);
+    rec.onresult = e => {
+      interimText = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const result = e.results[i];
+        const part = result[0]?.transcript || '';
+        if (result.isFinal) finalText += part + ' ';
+        else interimText += part;
+      }
+      const preview = (finalText + ' ' + interimText).trim();
+      if (preview) setNotice('सुन रहा हूँ: ' + preview);
+      if (timer) clearTimeout(timer);
+      if (preview) timer = setTimeout(flush, 1600);
+    };
+    rec.onerror = e => {
+      setListening(false);
+      if (e.error !== 'no-speech' && e.error !== 'aborted')
+        setNotice('माइक में समस्या हुई। दोबारा बोलें।');
+    };
+    rec.onend = () => {
+      setListening(false);
+      if (timer) clearTimeout(timer);
+      flush();
+    };
+    rec.start();
+  } catch {
+    setListening(false);
+    setNotice('माइक शुरू नहीं हुआ। दोबारा Voice बटन दबाएँ।');
+  }
+}
 
   function voiceInput() {
     if (voiceModeRef.current) {
