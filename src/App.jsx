@@ -56,6 +56,7 @@ export default function App() {
   const [selectedImage,setSelectedImage] = useState('');
   const [selectedImageName,setSelectedImageName] = useState('');
   const imageUploadRef = useRef(null);
+  const generatedImageResultRef = useRef(null);
   const [imageLoading,setImageLoading] = useState(false);
   const [imageProgress,setImageProgress] = useState(0);
 
@@ -70,6 +71,17 @@ export default function App() {
     }, 650);
     return () => clearInterval(timer);
   }, [imageLoading, generatedImage]);
+  useEffect(() => {
+    if (!generatedImage || imageLoading) return;
+    const timer = setTimeout(() => {
+      generatedImageResultRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [generatedImage, imageLoading]);
+
   const [activeMode,setActiveMode] = useState('chat');
   const [messages,setMessages] = useState([]);
   const [isLoading,setIsLoading] = useState(false);
@@ -368,7 +380,7 @@ export default function App() {
           </div>
         )}
     {generatedImage && (
-      <div className="generated-image-result">
+      <div className="generated-image-result" ref={generatedImageResultRef} style={{scrollMarginTop: 20}}>
         <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:12}}>
           <button type="button" onClick={async () => {
             try {
