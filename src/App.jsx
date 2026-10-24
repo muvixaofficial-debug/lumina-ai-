@@ -158,10 +158,20 @@ export default function App() {
         {role:'assistant', text:data.answer.trim(), id:Date.now()+1}
       ]);
       if (voiceModeRef.current) {
-      const answerText = data.answer.trim()
-        .replace(/[?？]+/g, ' ')
-        .replace(/([.,!?;:，。！？；：])+/g, ' ')
-        .replace(/\s+/g, ' ').trim();
+const answerText = String(data.answer ?? '').trim()
+        .replace(/```[\s\S]*?```/g, m => m.replace(/```[^\n]*\n?/g, '').replace(/```/g, ''))
+        .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/^\s{0,3}#{1,6}\s*/gm, '')
+        .replace(/^\s*>\s?/gm, '')
+        .replace(/^\s*[-+*]\s+/gm, '')
+        .replace(/^\s*\d+[.)]\s+/gm, '')
+        .replace(/(\*\*|__|~~|`|\*|_)/g, '')
+        .replace(/[?#|<>]/g, '')
+        .replace(/[ \t]+/g, ' ')
+        .replace(/\n{2,}/g, '. ')
+        .replace(/\s+([,.;:!।])/g, '$1')
+        .trim();
       fetch("https://muvixa-lumina-backend-8417.onrender.com/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
