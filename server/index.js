@@ -147,9 +147,9 @@ app.post('/api/chat', async (req, res) => {
           text.includes('UNAVAILABLE') ||
           text.includes('INTERNAL') ||
           text.includes('HIGH DEMAND');
-        if (!retryable || attempt === 3) throw error;
+        if (!retryable || attempt === 2) throw error;
         const delay = attempt * 500;
-        console.warn(`Gemini temporary error; retry ${attempt + 1}/3 after ${delay}ms`);
+        console.warn(`Gemini temporary error; retry ${attempt + 1}/2 after ${delay}ms`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
