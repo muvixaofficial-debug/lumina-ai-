@@ -1,9 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css';
+import { lazy, Suspense } from 'react';
+const MarkdownMessage = lazy(() => import('./components/MarkdownMessage.jsx'));
 import './App.css';
 
 const tools = [
@@ -464,7 +461,7 @@ const answerText = String(data.answer ?? '').trim()
         <h1>What can I help with?</h1>
         <p>मुझसे कुछ भी पूछें।</p>
       </section>:<section className="messages">
-        {messages.map(m=><div className={`message-row ${m.role === 'assistant' ? 'assistant-row' : 'user-row'}`} key={m.id}><div className={m.role === 'assistant' ? 'assistant-bubble' : 'user-bubble'}>{m.role === 'assistant' ? <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>{m.text}</ReactMarkdown> : m.text}</div></div>)}
+        {messages.map(m=><div className={`message-row ${m.role === 'assistant' ? 'assistant-row' : 'user-row'}`} key={m.id}><div className={m.role === 'assistant' ? 'assistant-bubble' : 'user-bubble'}>{m.role === 'assistant' ? <Suspense fallback={<span className="markdown-loading">उत्तर लोड हो रहा है…</span>}><MarkdownMessage>{m.text}</MarkdownMessage></Suspense> : m.text}</div></div>)}
         {isLoading&&<div className="message-row assistant-row"><div className="assistant-bubble typing-indicator">Lumina AI सोच रहा है…</div></div>}
         <div ref={endRef}/>
       </section>}
