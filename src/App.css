@@ -752,3 +752,45 @@ html[data-lumina-animations="off"] *::after {
   background: color-mix(in srgb, var(--lumina-voice-color, #3984ff) 35%, transparent);
   box-shadow: 0 0 20px var(--lumina-voice-color, #3984ff);
 }
+
+/* Lumina AI: soft blue + light pink voice-cloud polish */
+.lumina-cloud-orb {
+  background: radial-gradient(ellipse at 32% 28%, rgba(255,224,244,.92) 0%, rgba(255,190,230,.48) 24%, rgba(91,171,255,.62) 58%, rgba(37,92,230,.78) 100%);
+  box-shadow: 0 0 24px rgba(111,174,255,.30), 0 0 34px rgba(255,190,230,.18);
+}
+.lumina-cloud-orb span,
+.lumina-cloud-orb i,
+.lumina-cloud-orb b,
+.lumina-cloud-orb em,
+.lumina-cloud-orb strong {
+  box-shadow: 0 0 16px rgba(255,197,232,.22);
+}
+.lumina-cloud-ring {
+  border-color: rgba(123,184,255,.72);
+}
+.lumina-cloud-ring.ring-one {
+  border-top-color: rgba(255,205,237,.92);
+}
+.lumina-cloud-ring.ring-two {
+  border-left-color: rgba(255,190,230,.84);
+  border-bottom-color: rgba(100,151,255,.88);
+}
+.lumina-cloud-mic-stop {
+  border-color: rgba(255,201,235,.9);
+  background: linear-gradient(145deg, rgba(255,207,238,.34), rgba(42,119,255,.48));
+  box-shadow: 0 0 16px rgba(107,174,255,.30), 0 0 18px rgba(255,190,230,.20);
+  animation: none;
+}
+.lumina-cloud-orb.boost {
+  animation: none;
+}
+.lumina-cloud-orb.boost ~ .lumina-cloud-ring {
+  animation-duration: 4s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lumina-cloud-ring,
+  .lumina-cloud-orb,
+  .lumina-cloud-mic-stop {
+    animation: none !important;
+  }
+}
