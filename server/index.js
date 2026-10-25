@@ -128,7 +128,7 @@ app.post('/api/chat', async (req, res) => {
 
     let result;
     let lastError;
-    for (let attempt = 1; attempt <= 1; attempt++) {
+    for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         result = await ai.models.generateContent({
           model: 'gemini-3.5-flash-lite',
@@ -143,13 +143,14 @@ app.post('/api/chat', async (req, res) => {
         const status = Number(error?.status || error?.code || 0);
         const text = String(error?.message || '').toUpperCase();
         const retryable =
-          [500, 502, 503, 504].includes(status) ||
+          [408, 429, 500, 502, 503, 504].includes(status) ||
           text.includes('UNAVAILABLE') ||
           text.includes('INTERNAL') ||
-          text.includes('HIGH DEMAND');
-        if (!retryable || attempt === 2) throw error;
-        const delay = attempt * 500;
-        console.warn(`Gemini temporary error; retry ${attempt + 1}/2 after ${delay}ms`);
+          text.includes('HIGH DEMAND') ||
+          text.includes('RESOURCE_EXHAUSTED');
+        if (!retryable || attempt === 3) throw error;
+        const delay = attempt * 700;
+        console.warn(`Gemini temporary error; retry ${attempt + 1}/3 after ${delay}ms`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
