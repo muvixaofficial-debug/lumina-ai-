@@ -2,7 +2,11 @@ import { useState, useRef, useEffect } from 'react';
 import { lazy, Suspense } from 'react';
 const MarkdownMessage = lazy(() => import('./components/MarkdownMessage.jsx'));
 import './App.css';
+import VoiceCloudOverlay from './components/VoiceCloudOverlay.jsx';
+import ImageGenerator from './components/ImageGenerator.jsx';
 
+import Settings from './components/Settings.jsx';
+import ProfileSettings from './components/ProfileSettings';
 const tools = [
   { id:'new', title:'New Chat', desc:'नई बातचीत', icon:'edit' },
   { id:'history', title:'Chat History', desc:'पुरानी बातचीत', icon:'history' },
@@ -49,6 +53,18 @@ function Waveform() {
 }
 
 export default function App() {
+  // Restore the saved Voice AI cloud color on app startup only.
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('lumina-settings') || '{}');
+      const allowed = ['#3984ff', '#ed62b5', '#ff922e', '#27b56b'];
+      const chosen = allowed.includes(saved.accent) ? saved.accent : '#3984ff';
+      document.documentElement.style.setProperty('--lumina-voice-color', chosen);
+    } catch {
+      document.documentElement.style.setProperty('--lumina-voice-color', '#3984ff');
+    }
+  }, []);
+
   const [message,setMessage] = useState('');
   const [imagePrompt,setImagePrompt] = useState('');
   const [generatedImage,setGeneratedImage] = useState('');
@@ -78,7 +94,13 @@ export default function App() {
         block: 'start'
       });
     }, 250);
-    return () => clearTimeout(timer);
+
+
+  if (activeMode === 'profile') {
+    return <ProfileSettings onBack={() => setActiveMode('chat')} onOpenSettings={() => setActiveMode('settings')} />;
+  }
+
+  return () => clearTimeout(timer);
   }, [generatedImage, imageLoading]);
 
   const [activeMode,setActiveMode] = useState('chat');
@@ -171,40 +193,60 @@ const answerText = String(data.answer ?? '').trim()
         .replace(/\n{2,}/g, '. ')
         .replace(/\s+([,.;:!।])/g, '$1')
         .trim();
+      let browserVoiceStarted = false;
+      const ttsController = new AbortController();
+
+      const speakWithBrowser = () => {
+        if (!voiceModeRef.current || browserVoiceStarted) return;
+        browserVoiceStarted = true;
+        ttsController.abort();
+
+        const utterance = new SpeechSynthesisUtterance(answerText);
+        utterance.lang = "hi-IN";
+        utterance.onend = () => {
+          if (voiceModeRef.current) setTimeout(() => startVoiceListening(), 350);
+        };
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+      };
+
+      const ttsTimer = setTimeout(speakWithBrowser, 2500);
+
       fetch("https://muvixa-lumina-backend-8417.onrender.com/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: answerText })
+        body: JSON.stringify({ text: answerText }),
+        signal: ttsController.signal
       })
         .then(async response => {
           if (!response.ok) throw new Error("TTS unavailable");
           return response.blob();
         })
         .then(blob => {
-          if (!voiceModeRef.current) return;
+          clearTimeout(ttsTimer);
+          if (!voiceModeRef.current || browserVoiceStarted) return;
+
           const audioUrl = URL.createObjectURL(blob);
           const audio = new Audio(audioUrl);
+
           audio.onended = () => {
             URL.revokeObjectURL(audioUrl);
             if (voiceModeRef.current) setTimeout(() => startVoiceListening(), 350);
           };
+
           audio.onerror = () => {
             URL.revokeObjectURL(audioUrl);
-            if (voiceModeRef.current) startVoiceListening();
+            speakWithBrowser();
           };
+
           audio.play().catch(() => {
             URL.revokeObjectURL(audioUrl);
-            if (voiceModeRef.current) startVoiceListening();
+            speakWithBrowser();
           });
         })
         .catch(() => {
-          if (!voiceModeRef.current) return;
-          const utterance = new SpeechSynthesisUtterance(answerText);
-          utterance.lang = "hi-IN";
-          utterance.onend = () => {
-            if (voiceModeRef.current) setTimeout(() => startVoiceListening(), 350);
-          };
-          window.speechSynthesis.speak(utterance);
+          clearTimeout(ttsTimer);
+          speakWithBrowser();
         });
     }
     } catch (error) {
@@ -222,8 +264,8 @@ const answerText = String(data.answer ?? '').trim()
   }
 
 
-  async function generateImage() {
-    const prompt = imagePrompt.trim();
+  async function generateImage(promptOverride) {
+    const prompt = String(promptOverride ?? imagePrompt).trim();
     if (!prompt || imageLoading) return;
 
     setImageLoading(true);
@@ -285,7 +327,7 @@ const answerText = String(data.answer ?? '').trim()
         return;
       }
       const notices = {
-        image:'Image Generation चुना गया है, लेकिन तस्वीर बनाने की AI सेवा अभी कनेक्ट नहीं है।',
+        image:'नीचे तस्वीर का वर्णन लिखें और भेजें।',
         library:'Image Library चुना गया है; लाइब्रेरी सेव करने की सुविधा अभी तैयार नहीं है।'
       };
       setNotice(notices[tool.id] || '');
@@ -412,7 +454,17 @@ const answerText = String(data.answer ?? '').trim()
   }
 
   return <div className="app-shell">
-    {voiceMode && <div className={'lumina-cloud-overlay '+(cloudCompact?'compact':'')} aria-live="polite"><div className="lumina-cloud-stage" onTouchStart={e=>{cloudTouchY.current=e.touches[0].clientY;}} onTouchEnd={e=>{const dy=e.changedTouches[0].clientY-cloudTouchY.current;if(dy>55)setCloudCompact(true);else if(dy< -55)setCloudCompact(false);}}><div className={'lumina-cloud-orb '+(cloudBoost?'boost':'')} role="button" tabIndex="0" aria-label="Lumina cloud; touch to animate" onClick={()=>{setCloudBoost(true);setTimeout(()=>setCloudBoost(false),1100);}} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setCloudBoost(true);setTimeout(()=>setCloudBoost(false),1100);}}}><span></span><i></i><b></b><em></em><strong></strong></div><div className="lumina-cloud-ring ring-one"></div><div className="lumina-cloud-ring ring-two"></div></div><p>Lumina सुन रहा है…</p><button type="button" className="lumina-cloud-mic-stop" aria-label="आवाज़ बंद करें" onClick={voiceInput}><Icon name="mic" size={25}/></button></div>}
+    {voiceMode && (
+      <VoiceCloudOverlay
+        cloudCompact={cloudCompact}
+        cloudBoost={cloudBoost}
+        setCloudCompact={setCloudCompact}
+        setCloudBoost={setCloudBoost}
+        cloudTouchY={cloudTouchY}
+        voiceInput={voiceInput}
+        Icon={Icon}
+      />
+    )}
       <header className="topbar">
       <button className="icon-button header-menu" aria-label="मेनू खोलें" onClick={()=>{setMenu(true);setProfileOpen(false);}}>
         <Icon name="menu" size={24}/>
@@ -426,7 +478,7 @@ const answerText = String(data.answer ?? '').trim()
 
     {profileOpen&&<div className="profile-popover">
       <div className="profile-pop-head"><span className="avatar">L</span><span><b>Lumina User</b><small>Free plan</small></span></div>
-      <button onClick={()=>{setProfileOpen(false);setNotice('प्रोफाइल सेटिंग्स अभी जोड़ी जानी बाकी हैं।');}}>Profile & Settings <Icon name="chevron" size={17}/></button>
+      <button onClick={()=>{setProfileOpen(false);setActiveMode('profile');setNotice('');}}>Profile & Settings <Icon name="chevron" size={17}/></button>
       <button onClick={()=>{setProfileOpen(false);setNotice('आप अभी Lumina AI के Free plan पर हैं।');}}>My Plan <Icon name="chevron" size={17}/></button>
     </div>}
 
@@ -468,145 +520,25 @@ const answerText = String(data.answer ?? '').trim()
       {notice&&<div className="notice-inline"><span>{notice}</span><button aria-label="संदेश बंद करें" onClick={()=>setNotice('')}><Icon name="close" size={16}/></button></div>}
     </main>
 
+    {activeMode === 'settings' && <Settings />}
+        {activeMode === 'profile' && <ProfileSettings onBack={() => setActiveMode('chat')} onOpenSettings={() => setActiveMode('settings')} />}
     {activeMode === 'image' && (
-  <section className="image-generator">
-    <h2>🖼️ Image Generation</h2>
-    <p>आप कैसी तस्वीर बनाना चाहते हैं?</p>
-    <input
-      ref={imageUploadRef}
-      type="file"
-      accept="image/png,image/jpeg,image/webp"
-      hidden
-      onChange={e => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        if (file.size > 5 * 1024 * 1024) {
-          setNotice('फोटो 5 MB से छोटी चुनें।');
-          e.target.value = '';
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = () => {
-          setSelectedImage(String(reader.result || ''));
-          setSelectedImageName(file.name);
-          setNotice('');
-        };
-        reader.onerror = () => setNotice('फोटो पढ़ी नहीं जा सकी। दूसरी फोटो चुनें।');
-        reader.readAsDataURL(file);
-      }}
-    />
-    <button type="button" onClick={() => imageUploadRef.current?.click()}>
-      📷 गैलरी से अपनी फोटो चुनें
-    </button>
-    {selectedImage && <div style={{margin:'12px 0',textAlign:'center'}}>
-      <img src={selectedImage} alt="अपलोड की गई फोटो" style={{maxWidth:'100%',maxHeight:220,borderRadius:14}} />
-      <p>{selectedImageName}</p>
-      <button type="button" onClick={() => {
-        setSelectedImage('');
-        setSelectedImageName('');
-        if (imageUploadRef.current) imageUploadRef.current.value='';
-      }}>फोटो हटाएँ</button>
-    </div>}
-    <textarea
-      value={imagePrompt}
-      onChange={e => setImagePrompt(e.target.value)}
-      placeholder="जैसे: पहाड़ों के बीच एक सुंदर anime गाँव..."
-      maxLength={2000}
-      rows={3}
-      aria-label="तस्वीर का विवरण"
-    />
-    <button
-      type="button"
-      onClick={generateImage}
-      disabled={imageLoading || !imagePrompt.trim()}
-    >
-      {imageLoading ? 'तस्वीर बन रही है…' : (selectedImage ? '✨ मेरी फोटो AI से एडिट करें' : '🎨 नई तस्वीर बनाएँ')}
-    </button>
-    {imageLoading && (
-          <div style={{margin:'20px 0',padding:18,borderRadius:18,background:'rgba(130,100,255,0.10)'}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <strong>✨ Creating your image</strong><strong>{imageProgress}%</strong>
-            </div>
-            <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={imageProgress}
-              style={{height:10,marginTop:14,borderRadius:99,background:'rgba(140,140,160,.25)',overflow:'hidden'}}>
-              <div style={{width:imageProgress+'%',height:'100%',borderRadius:99,background:'linear-gradient(90deg,#8b5cf6,#38bdf8)',transition:'width .5s ease'}} />
-            </div>
-            <p>तस्वीर बन रही है, कृपया प्रतीक्षा करें…</p>
-          </div>
-        )}
-    {generatedImage && (
-      <div className="generated-image-result" ref={generatedImageResultRef} style={{scrollMarginTop: 20}}>
-        <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:12}}>
-          <button type="button" onClick={async () => {
-            try {
-              if (navigator.share) {
-                const r = await fetch(generatedImage);
-                const blob = await r.blob();
-                const file = new File([blob], 'lumina-ai-image.png', {type: blob.type || 'image/png'});
-                if (!navigator.canShare || navigator.canShare({files:[file]})) {
-                  await navigator.share({files:[file], title:'Lumina AI Image'});
-                } else {
-                  await navigator.share({title:'Lumina AI Image', url:generatedImage});
-                }
-              } else {
-                await navigator.clipboard.writeText(generatedImage);
-                setNotice('तस्वीर का लिंक कॉपी हो गया।');
-              }
-            } catch (e) {
-              if (e.name !== 'AbortError') setNotice('Share नहीं हो पाया। Save बटन इस्तेमाल करें।');
-            }
-          }}>📤 Share</button>
-          <button type="button" onClick={async () => {
-            try {
-              const r = await fetch(generatedImage);
-              const blob = await r.blob();
-              if (navigator.clipboard && window.ClipboardItem && navigator.clipboard.write) {
-                await navigator.clipboard.write([new ClipboardItem({[blob.type || 'image/png']:blob})]);
-                setNotice('तस्वीर कॉपी हो गई।');
-              } else {
-                await navigator.clipboard.writeText(generatedImage);
-                setNotice('तस्वीर का लिंक कॉपी हो गया।');
-              }
-            } catch (e) {
-              try {
-                await navigator.clipboard.writeText(generatedImage);
-                setNotice('तस्वीर का लिंक कॉपी हो गया।');
-              } catch {
-                setNotice('Copy नहीं हो पाया। Save बटन इस्तेमाल करें।');
-              }
-            }
-          }}>📋 Copy</button>
-          <a href={generatedImage} download="lumina-ai-image.png"
-             onClick={async e => {
-               if (generatedImage.startsWith('data:')) return;
-               e.preventDefault();
-               try {
-                 const r = await fetch(generatedImage);
-                 if (!r.ok) throw new Error('Download failed');
-                 const blob = await r.blob();
-                 const url = URL.createObjectURL(blob);
-                 const a = document.createElement('a');
-                 a.href = url;
-                 a.download = 'lumina-ai-image.png';
-                 document.body.appendChild(a);
-                 a.click();
-                 a.remove();
-                 setTimeout(() => URL.revokeObjectURL(url), 1500);
-               } catch {
-                 window.open(generatedImage, '_blank', 'noopener');
-                 setNotice('तस्वीर नए टैब में खुली है। वहाँ से डाउनलोड करें।');
-               }
-             }}
-             style={{display:'inline-flex',alignItems:'center',padding:'8px 12px',borderRadius:10,textDecoration:'none'}}>
-             ⬇️ Save / Download
-          </a>
-        </div>
-        <img src={generatedImage} alt={imagePrompt || 'AI द्वारा बनाई गई तस्वीर'}
-             style={{display:'block',maxWidth:'100%',height:'auto'}} />
-      </div>
+      <ImageGenerator
+        imageUploadRef={imageUploadRef}
+        generatedImageResultRef={generatedImageResultRef}
+        imageLoading={imageLoading}
+        imageProgress={imageProgress}
+        generatedImage={generatedImage}
+        selectedImage={selectedImage}
+        setSelectedImage={setSelectedImage}
+        selectedImageName={selectedImageName}
+        setSelectedImageName={setSelectedImageName}
+        imagePrompt={imagePrompt}
+        setImagePrompt={setImagePrompt}
+        generateImage={generateImage}
+        setNotice={setNotice}
+      />
     )}
-  </section>
-)}
 
 <footer className="composer-wrap">
       {plus&&<><button className="dismiss-layer" aria-label="मेनू बंद करें" onClick={()=>setPlus(false)}/><div className="tools-menu">
@@ -626,7 +558,7 @@ const answerText = String(data.answer ?? '').trim()
         })()}
         <button className="plus-btn" aria-label="टूल जोड़ें" onClick={()=>setPlus(!plus)}><Icon name={plus?'close':'plus'} size={24}/></button>
         {activeMode === 'image' && selectedImage && <div className="composer-image-preview"><img src={selectedImage} alt="चुनी हुई फोटो"/><button type="button" aria-label="फोटो हटाएँ" onClick={()=>{setSelectedImage('');setSelectedImageName('');if(imageUploadRef.current)imageUploadRef.current.value='';}}>×</button></div>}
-        <textarea rows="1" value={activeMode === 'image' ? imagePrompt : message} placeholder={activeMode === 'image' ? 'तस्वीर का वर्णन करें' : 'Message Lumina AI'} aria-label="अपना संदेश लिखें" onChange={e=>activeMode === 'image' ? setImagePrompt(e.target.value) : setMessage(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();activeMode==='image'?generateImage():sendMessage();}}}/>
+        <textarea key={activeMode} rows="1" value={activeMode === 'image' ? imagePrompt : message} placeholder={activeMode === 'image' ? 'तस्वीर का वर्णन करें' : 'Message Lumina AI'} aria-label="अपना संदेश लिखें" onChange={e=>{const el=e.currentTarget;const value=el.value;activeMode === 'image' ? setImagePrompt(value) : setMessage(value);el.style.height='auto';el.style.height=Math.min(el.scrollHeight,220)+'px';}} onInput={e=>{const el=e.currentTarget;el.style.height='auto';el.style.height=Math.min(el.scrollHeight,220)+'px';}} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();activeMode==='image'?generateImage():sendMessage();}}}/>
         <button className={'mic-btn '+((listening||voiceMode)?'listening':'')} aria-label={voiceMode?'Voice बंद करें':'Voice चालू करें'} onClick={voiceInput}><Icon name="mic" size={21}/></button>
         {(activeMode==='image'?imagePrompt.trim():message.trim()) && <button className="send-btn" aria-label="भेजें" disabled={isLoading||imageLoading} onClick={()=>activeMode==='image'?generateImage():sendMessage()}><Icon name="send" size={22}/></button>}
       </div>
