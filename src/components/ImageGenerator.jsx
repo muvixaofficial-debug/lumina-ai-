@@ -53,9 +53,7 @@ export default function ImageGenerator({
         reader.readAsDataURL(file);
       }}
     />
-    <button type="button" onClick={() => imageUploadRef.current?.click()}>
-      📷 गैलरी से अपनी फोटो चुनें
-    </button>
+    
     {selectedImage && <div className="image-selected-preview" style={{margin:'12px 0',textAlign:'center'}}>
       <img src={selectedImage} alt="अपलोड की गई फोटो" style={{maxWidth:'100%',maxHeight:220,borderRadius:14}} />
       <p>{selectedImageName}</p>
@@ -129,13 +127,13 @@ export default function ImageGenerator({
     {imageLoading && (
           <div className="image-generation-progress" style={{margin:'20px 0',padding:18,borderRadius:18,background:'rgba(130,100,255,0.10)'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <strong>✨ Creating your image</strong><strong>{imageProgress}%</strong>
+              <strong>✨ Sketching it out…</strong><strong>{imageProgress}%</strong>
             </div>
             <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={imageProgress}
               style={{height:10,marginTop:14,borderRadius:99,background:'rgba(140,140,160,.25)',overflow:'hidden'}}>
               <div style={{width:imageProgress+'%',height:'100%',borderRadius:99,background:'linear-gradient(90deg,#8b5cf6,#38bdf8)',transition:'width .5s ease'}} />
             </div>
-            <p>तस्वीर बन रही है, कृपया प्रतीक्षा करें…</p>
+            <p>आपकी तस्वीर तैयार हो रही है। कृपया प्रतीक्षा करें…</p>
           </div>
         )}
     {generatedImage && (
