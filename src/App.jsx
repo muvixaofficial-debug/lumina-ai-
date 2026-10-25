@@ -118,7 +118,20 @@ export default function App() {
   const voiceModeRef = useRef(false);
   const voiceRetryRef = useRef(0);
   const [profileOpen,setProfileOpen] = useState(false);
-  const [history,setHistory] = useState([]);
+  const [history,setHistory] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('lumina-chat-history-v1') || '[]');
+      return Array.isArray(saved) ? saved : [];
+    } catch { return []; }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem('lumina-chat-history-v1', JSON.stringify(history));
+    } catch (error) {
+      console.warn('Chat history could not be saved:', error);
+    }
+  }, [history]);
+
   const fileRef = useRef(null);
   const endRef = useRef(null);
 
