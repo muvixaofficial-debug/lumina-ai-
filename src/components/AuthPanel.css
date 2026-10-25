@@ -1,0 +1,120 @@
+.lumina-auth {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 22px;
+  color: var(--text-primary, #f7f4ff);
+  background: var(--panel-bg, #171426);
+  border: 1px solid var(--border-color, #39304e);
+  border-radius: 24px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+.lumina-auth * { box-sizing: border-box; }
+.lumina-auth button, .lumina-auth input { font: inherit; }
+.lumina-auth button { cursor: pointer; }
+.lumina-auth button:disabled { opacity: .55; cursor: not-allowed; }
+.lumina-auth-back, .lumina-auth-links button {
+  color: #c8a8ff;
+  background: transparent;
+  border: 0;
+  padding: 8px 0;
+}
+.lumina-auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0;
+  font-size: 18px;
+  font-weight: 750;
+}
+.lumina-auth-logo {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  color: white;
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+}
+.lumina-auth h2 { font-size: 26px; margin: 12px 0 8px; }
+.lumina-auth-subtitle { color: var(--text-secondary, #b9b2c8); margin: 0 0 22px; line-height: 1.5; }
+.lumina-auth-notice {
+  padding: 12px;
+  border-radius: 12px;
+  background: #352b19;
+  color: #ffdf9b;
+  font-size: 13px;
+  line-height: 1.45;
+  margin-bottom: 14px;
+}
+.lumina-auth-social {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid var(--border-color, #494056);
+  border-radius: 13px;
+  background: var(--input-bg, #211c30);
+  color: inherit;
+  margin: 10px 0;
+}
+.lumina-auth-google { font-weight: 800; color: #72a7ff; }
+.lumina-auth-facebook { font-size: 22px; font-weight: 800; color: #75a7ff; }
+.lumina-auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-secondary, #aaa1b9);
+  font-size: 13px;
+  margin: 20px 0;
+}
+.lumina-auth-divider::before, .lumina-auth-divider::after {
+  content: ""; height: 1px; flex: 1; background: var(--border-color, #39304e);
+}
+.lumina-auth form { display: grid; gap: 9px; }
+.lumina-auth label { font-size: 14px; font-weight: 600; margin-top: 5px; }
+.lumina-auth input {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  color: inherit;
+  background: var(--input-bg, #211c30);
+  border: 1px solid var(--border-color, #494056);
+  border-radius: 12px;
+  outline-offset: 3px;
+}
+.lumina-auth input:focus { border-color: #a855f7; }
+.lumina-auth-submit {
+  width: 100%;
+  min-height: 49px;
+  margin-top: 10px;
+  border: 0;
+  border-radius: 13px;
+  background: linear-gradient(100deg, #9333ea, #6366f1);
+  color: white;
+  font-weight: 700;
+}
+.lumina-auth-error, .lumina-auth-message {
+  margin: 8px 0;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.lumina-auth-error { color: #ff9292; }
+.lumina-auth-message { color: #8ce8b1; }
+.lumina-auth-links { text-align: center; margin-top: 14px; font-size: 14px; }
+.lumina-auth-links p { margin: 8px 0; }
+.lumina-auth-terms {
+  color: var(--text-secondary, #aaa1b9);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+  margin: 22px 0 0;
+}
+@media (max-width: 360px) {
+  .lumina-auth { padding: 16px; }
+  .lumina-auth h2 { font-size: 23px; }
+}

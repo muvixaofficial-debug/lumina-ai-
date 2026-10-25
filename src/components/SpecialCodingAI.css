@@ -1,0 +1,125 @@
+.lumina-coding {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 18px;
+  color: var(--text-primary, #f5f3ff);
+  box-sizing: border-box;
+}
+.lumina-coding * { box-sizing: border-box; }
+.lumina-coding .lumina-coding-head { margin-bottom: 20px; }
+.lumina-coding .lc-back {
+  margin-bottom: 18px;
+  padding: 9px 13px;
+  border: 1px solid var(--border-color, #45405b);
+  border-radius: 12px;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+.lumina-coding .lc-eyebrow {
+  color: #a99aff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+}
+.lumina-coding h2 {
+  margin: 8px 0;
+  font-size: clamp(25px, 5vw, 34px);
+  line-height: 1.2;
+}
+.lumina-coding .lumina-coding-head p,
+.lumina-coding .lc-note {
+  color: var(--text-secondary, #aaa5bd);
+  line-height: 1.6;
+  font-size: 14px;
+}
+.lumina-coding .lc-modes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0 22px;
+}
+.lumina-coding .lc-mode {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 62px;
+  min-width: 0;
+  padding: 12px;
+  text-align: left;
+  overflow-wrap: anywhere;
+  color: inherit;
+  background: var(--surface-secondary, rgba(128, 110, 170, .10));
+  border: 1px solid var(--border-color, rgba(170, 155, 205, .25));
+  border-radius: 15px;
+  cursor: pointer;
+}
+.lumina-coding .lc-mode.active {
+  border-color: #9b82ff;
+  background: rgba(139, 92, 246, .18);
+}
+.lumina-coding .lc-mode-icon { font-size: 21px; flex-shrink: 0; }
+.lumina-coding .lc-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.lumina-coding .lc-selected {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.lumina-coding .lc-selected span {
+  color: var(--text-secondary, #aaa5bd);
+  font-size: 12px;
+}
+.lumina-coding .lc-form label {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.lumina-coding .lc-form textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid var(--border-color, #49425e);
+  border-radius: 13px;
+  background: var(--input-bg, rgba(128, 110, 170, .08));
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.55;
+  resize: vertical;
+}
+.lumina-coding .lc-form textarea:focus {
+  outline: 2px solid #9b82ff;
+  outline-offset: 1px;
+}
+.lumina-coding .lc-submit {
+  min-height: 48px;
+  margin-top: 8px;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 14px;
+  color: white;
+  background: linear-gradient(100deg, #7656e8, #a15de8);
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+.lumina-coding .lc-submit:disabled { opacity: .6; cursor: wait; }
+.lumina-coding .lc-result {
+  padding: 12px;
+  border: 1px solid var(--border-color, #49425e);
+  border-radius: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.lumina-coding .lc-note { margin-top: 16px; font-size: 12px; }
+@media (min-width: 560px) {
+  .lumina-coding .lc-modes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
