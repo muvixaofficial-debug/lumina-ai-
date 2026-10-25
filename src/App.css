@@ -352,7 +352,7 @@ button:focus-visible,textarea:focus-visible{outline:2px solid #9b9bf9;outline-of
 .image-generator > h2,
 .image-generator > p,
 .image-generator > textarea,
-.image-generator > div:not(.generated-image-result) {
+.image-generator > div:not(.generated-image-result):not(.image-selected-preview):not(.image-generation-progress) {
   display: none !important;
 }
 .image-generator > button:first-of-type {
@@ -373,4 +373,382 @@ button:focus-visible,textarea:focus-visible{outline:2px solid #9b9bf9;outline-of
   max-width: 100%;
   height: auto;
   border-radius: 14px;
+}
+
+
+/* Lumina AI: improved composer across modes */
+.composer {
+  flex-wrap: wrap;
+  align-items: center;
+  border-radius: 24px;
+  row-gap: 5px;
+}
+
+.composer .mode-chip {
+  order: -3;
+  flex: 0 0 100%;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 1px 0 3px;
+}
+
+.composer .composer-image-preview {
+  order: -2;
+  flex: 0 0 100%;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0 0 4px;
+}
+
+.composer .composer-image-preview button {
+  left: auto;
+  right: 5px;
+  top: 5px;
+}
+
+.composer .plus-btn { order: -1; }
+
+.composer textarea {
+  order: 0;
+  flex: 1 1 150px;
+  width: 0;
+  min-height: 42px;
+  max-height: 220px;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  align-self: center;
+  box-sizing: border-box;
+}
+
+.composer .mic-btn { order: 1; }
+.composer .send-btn { order: 2; }
+
+@media (max-width: 600px) {
+  .composer-wrap {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .composer {
+    gap: 5px;
+    padding: 7px;
+    row-gap: 4px;
+  }
+
+  .composer textarea {
+    flex-basis: 120px;
+    font-size: 16px;
+  }
+
+  .composer .mode-chip { min-height: 36px; }
+
+  .composer .mode-chip-label {
+    max-width: calc(100vw - 110px);
+  }
+
+  .composer .composer-image-preview img {
+    max-width: 112px;
+    max-height: 82px;
+    object-fit: contain;
+  }
+}
+
+
+/* LUMINA_FULL_MESSAGE_VISIBILITY_FIX */
+.assistant-bubble,
+.user-bubble {
+  max-height: none !important;
+  height: auto !important;
+  overflow: visible !important;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  line-height: 1.65;
+}
+.assistant-bubble p,
+.assistant-bubble li,
+.assistant-bubble h1,
+.assistant-bubble h2,
+.assistant-bubble h3,
+.assistant-bubble blockquote,
+.assistant-bubble pre {
+  max-height: none !important;
+  overflow: visible !important;
+  line-height: 1.65;
+}
+.assistant-bubble p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin-top: 0.45em;
+  margin-bottom: 0.75em;
+}
+.assistant-bubble pre {
+  max-width: 100%;
+  overflow-x: auto !important;
+}
+
+
+/* Lumina AI photo preview and generation visibility fix */
+.image-generator .image-selected-preview {
+  display: block !important;
+  width: fit-content;
+  max-width: 100%;
+  margin: 10px 0 !important;
+  text-align: left !important;
+}
+.image-generator .image-selected-preview img {
+  display: block;
+  max-width: 160px;
+  max-height: 220px;
+  object-fit: contain;
+}
+.image-generator .image-generation-progress {
+  display: block !important;
+  width: 100%;
+  animation: lumina-progress-appear .25s ease-out;
+}
+.image-generator .image-generation-progress [role="progressbar"] > div {
+  transition: width .4s ease;
+}
+.composer-image-preview {
+  flex: 0 0 auto !important;
+  width: fit-content !important;
+  max-width: 125px;
+  padding: 2px 0 5px 2px;
+}
+.composer-image-preview button {
+  left: auto !important;
+  right: 2px;
+  top: 0 !important;
+  z-index: 2;
+  background: #fff;
+  color: #29233b;
+  box-shadow: 0 1px 5px #0002;
+}
+@keyframes lumina-progress-appear {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+/* Lumina final UI visibility fix */
+.image-generator > .selected-image-preview,
+.image-generator > .image-generation-progress {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.image-generator > .selected-image-preview {
+  margin: 12px 0 !important;
+  text-align: left !important;
+}
+
+.image-generator > .selected-image-preview img {
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: min(100%, 240px) !important;
+  max-height: 220px !important;
+  object-fit: contain !important;
+  border-radius: 14px;
+}
+
+.image-generator > .image-generation-progress {
+  margin: 16px 0 !important;
+  padding: 16px !important;
+  border-radius: 16px;
+  border: 1px solid rgba(139, 92, 246, .3);
+}
+
+.image-generator > .image-generation-progress::before {
+  content: "";
+  display: block;
+  width: 30px;
+  height: 30px;
+  margin: 0 auto 12px;
+  border: 3px solid rgba(139, 92, 246, .22);
+  border-top-color: #8b5cf6;
+  border-right-color: #38bdf8;
+  border-radius: 50%;
+  animation: lumina-final-spin .85s linear infinite;
+}
+
+@keyframes lumina-final-spin {
+  to { transform: rotate(360deg); }
+}
+
+.composer .composer-image-preview {
+  position: relative;
+  order: -2;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  max-width: 120px;
+  min-width: 0;
+  margin: 0 4px 4px 0 !important;
+}
+
+.composer .composer-image-preview img {
+  display: block;
+  max-width: 112px !important;
+  max-height: 88px !important;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.composer .composer-image-preview button {
+  position: absolute !important;
+  top: 4px !important;
+  right: 4px !important;
+  left: auto !important;
+  z-index: 5;
+}
+
+.composer .plus-btn {
+  order: -1;
+}
+
+.assistant-bubble,
+.user-bubble,
+.message-bubble {
+  height: auto !important;
+  max-height: none !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.55 !important;
+}
+
+.assistant-bubble pre,
+.user-bubble pre,
+.message-bubble pre {
+  max-width: 100%;
+  max-height: none !important;
+  white-space: pre-wrap !important;
+  overflow-x: auto;
+  overflow-y: visible !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image-generator > .image-generation-progress::before {
+    animation-duration: 2.5s;
+  }
+}
+
+
+/* Lumina Next button visibility fix */
+.image-generator > .image-selected-preview,
+.image-generator > .image-selected-preview img,
+.image-generator > .next-image-step,
+.image-generator > textarea,
+.image-generator > .image-generate-button,
+.image-generator > .image-generation-progress {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.image-generator > .next-image-step,
+.image-generator > .image-generate-button {
+  width: 100% !important;
+  min-height: 44px !important;
+  margin: 10px 0 !important;
+  box-sizing: border-box !important;
+}
+
+.image-generator > textarea {
+  width: 100% !important;
+  min-height: 110px !important;
+  max-height: 220px !important;
+  box-sizing: border-box !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  white-space: pre-wrap !important;
+}
+
+.image-generator > .image-generation-progress::before {
+  content: "";
+  display: block;
+  width: 30px;
+  height: 30px;
+  margin: 0 auto 12px;
+  border: 3px solid rgba(139,92,246,.25);
+  border-top-color: #8b5cf6;
+  border-right-color: #38bdf8;
+  border-radius: 50%;
+  animation: lumina-next-spin .85s linear infinite;
+}
+
+@keyframes lumina-next-spin {
+  to { transform: rotate(360deg); }
+}
+
+
+/* Lumina settings accent integration */
+
+
+
+html[data-lumina-animations="off"] *,
+html[data-lumina-animations="off"] *::before,
+html[data-lumina-animations="off"] *::after {
+  animation-duration: 0.001ms !important;
+  transition-duration: 0.001ms !important;
+}
+
+/* Voice AI animation color only — does not recolor the full app */
+.voice-cloud, .voice-orb, .voice-mic,
+[class*="voice-cloud"], [class*="voice-orb"], [class*="voice-mic"] {
+  --voice-animation-color: var(--lumina-voice-color, #3984ff);
+}
+
+/* Voice cloud selected color: isolated to the cloud and microphone */
+.lumina-cloud-overlay {
+  background: radial-gradient(ellipse at 50% 55%,
+    color-mix(in srgb, var(--lumina-voice-color, #3984ff) 28%, transparent),
+    rgba(7,8,35,.74) 75%);
+}
+.lumina-cloud-overlay p {
+  text-shadow: 0 0 12px var(--lumina-voice-color, #3984ff);
+}
+.lumina-cloud-orb {
+  background: radial-gradient(ellipse at 35% 22%,
+    color-mix(in srgb, var(--lumina-voice-color, #3984ff) 18%, white) 0%,
+    color-mix(in srgb, var(--lumina-voice-color, #3984ff) 42%, white) 15%,
+    color-mix(in srgb, var(--lumina-voice-color, #3984ff) 72%, white) 36%,
+    var(--lumina-voice-color, #3984ff) 59%,
+    color-mix(in srgb, var(--lumina-voice-color, #3984ff) 62%, #101044) 76%,
+    #07102e 100%);
+  filter: drop-shadow(0 0 18px var(--lumina-voice-color, #3984ff))
+          drop-shadow(0 0 42px color-mix(in srgb, var(--lumina-voice-color, #3984ff) 65%, transparent));
+}
+.lumina-cloud-orb span,
+.lumina-cloud-orb i,
+.lumina-cloud-orb b,
+.lumina-cloud-orb em,
+.lumina-cloud-orb strong {
+  background: radial-gradient(circle at 35% 28%,
+    color-mix(in srgb, var(--lumina-voice-color, #3984ff) 12%, white) 0%,
+    color-mix(in srgb, var(--lumina-voice-color, #3984ff) 48%, white) 24%,
+    color-mix(in srgb, var(--lumina-voice-color, #3984ff) 72%, white) 58%,
+    var(--lumina-voice-color, #3984ff) 82%,
+    color-mix(in srgb, var(--lumina-voice-color, #3984ff) 55%, #101044) 100%);
+  box-shadow: inset 5px 4px 12px rgba(255,255,255,.55),
+              0 0 20px color-mix(in srgb, var(--lumina-voice-color, #3984ff) 75%, transparent);
+}
+.lumina-cloud-ring {
+  border-color: color-mix(in srgb, var(--lumina-voice-color, #3984ff) 85%, white);
+}
+.lumina-cloud-ring.ring-one {
+  border-top-color: color-mix(in srgb, var(--lumina-voice-color, #3984ff) 55%, white);
+}
+.lumina-cloud-ring.ring-two {
+  border-left-color: var(--lumina-voice-color, #3984ff);
+  border-bottom-color: color-mix(in srgb, var(--lumina-voice-color, #3984ff) 65%, #101044);
+}
+.lumina-cloud-mic-stop {
+  border-color: var(--lumina-voice-color, #3984ff);
+  background: color-mix(in srgb, var(--lumina-voice-color, #3984ff) 35%, transparent);
+  box-shadow: 0 0 20px var(--lumina-voice-color, #3984ff);
 }
