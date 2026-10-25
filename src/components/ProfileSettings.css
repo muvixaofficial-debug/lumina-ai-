@@ -1,44 +1,75 @@
 .lumina-profile-page {
+  --profile-surface: var(--lumina-card, rgba(128, 128, 150, .08));
+  --profile-border: var(--lumina-border, rgba(130, 130, 155, .28));
   width: 100%;
   max-width: 760px;
   margin: 0 auto;
-  padding: 20px 16px 36px;
-  color: var(--lumina-text, #f5f2ff);
+  padding: 18px 16px 36px;
   box-sizing: border-box;
+  color: var(--lumina-text, inherit);
 }
+
 .lumina-profile-header {
   display: flex;
   align-items: center;
   gap: 14px;
   margin-bottom: 22px;
 }
-.lumina-profile-back, .lumina-profile-primary, .lumina-profile-secondary {
-  min-height: 44px;
+
+.lumina-profile-back,
+.lumina-profile-primary,
+.lumina-profile-secondary {
+  min-height: 46px;
   border-radius: 13px;
   padding: 10px 15px;
   font: inherit;
+  font-weight: 650;
   cursor: pointer;
+  transition: background-color .18s ease, border-color .18s ease;
 }
-.lumina-profile-back, .lumina-profile-secondary {
-  color: inherit;
-  background: transparent;
-  border: 1px solid var(--lumina-border, #45405c);
+
+.lumina-profile-back {
+  flex-shrink: 0;
+  color: #fff !important;
+  background: #29243b !important;
+  border: 2px solid #8274a8 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .22);
 }
+
+.lumina-profile-back span {
+  font-size: 20px;
+  margin-right: 4px;
+}
+
+.lumina-profile-heading { min-width: 0; }
+
 .lumina-profile-eyebrow {
   margin: 0 0 4px;
   color: var(--lumina-accent, #3984ff);
   font-size: 12px;
+  font-weight: 750;
   letter-spacing: 2px;
 }
-.lumina-profile-header h1 { margin: 0; font-size: clamp(22px, 5vw, 30px); }
-.lumina-profile-card, .lumina-profile-section {
-  border: 1px solid var(--lumina-border, #39334d);
-  background: var(--lumina-card, rgba(255,255,255,.035));
+
+.lumina-profile-header h1 {
+  margin: 0;
+  font-size: clamp(21px, 5vw, 30px);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.lumina-profile-card,
+.lumina-profile-section {
+  border: 1px solid var(--profile-border);
+  background: var(--profile-surface);
   border-radius: 20px;
   padding: 20px;
   margin-bottom: 16px;
+  min-width: 0;
 }
+
 .lumina-profile-card { text-align: center; }
+
 .lumina-profile-avatar {
   width: 84px;
   height: 84px;
@@ -50,49 +81,146 @@
   background: var(--lumina-accent, #3984ff);
   color: white;
   font-size: 32px;
-  font-weight: 700;
+  font-weight: 750;
 }
+
 .lumina-profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.lumina-profile-card h2, .lumina-profile-section h2 { margin: 0 0 8px; font-size: 19px; }
-.lumina-profile-card p { margin: 0 0 16px; opacity: .72; overflow-wrap: anywhere; }
-.lumina-profile-primary {
-  color: white;
-  background: var(--lumina-accent, #3984ff);
-  border: 0;
+.lumina-profile-card h2,
+.lumina-profile-section h2 { margin: 0 0 9px; font-size: 19px; }
+
+.lumina-profile-card p {
+  margin: 0 0 16px;
+  opacity: .82;
+  overflow-wrap: anywhere;
 }
-.lumina-profile-section label { display: block; margin: 14px 0; font-size: 14px; }
-.lumina-profile-section input {
+
+.lumina-profile-primary {
+  color: #fff !important;
+  background: var(--lumina-accent, #3984ff) !important;
+  border: 1px solid transparent;
+}
+
+.lumina-profile-secondary {
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--profile-border);
+}
+
+.lumina-profile-section label {
+  display: block;
+  margin: 14px 0;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.lumina-profile-section input:not([type="file"]),
+.lumina-profile-select {
   display: block;
   width: 100%;
   box-sizing: border-box;
   margin-top: 7px;
-  min-height: 44px;
+  min-height: 46px;
   padding: 11px 12px;
   border-radius: 12px;
-  border: 1px solid var(--lumina-border, #45405c);
+  border: 1px solid var(--profile-border);
   color: inherit;
-  background: rgba(0,0,0,.14);
+  background: var(--viz-panel, transparent);
+  font: inherit;
+  font-size: 16px;
+}
+
+.lumina-profile-section input[type="file"] {
+  display: block;
+  max-width: 100%;
+  margin-top: 8px;
+  color: inherit;
   font: inherit;
 }
+
+.lumina-profile-description {
+  margin: 0 0 14px;
+  opacity: .8;
+  line-height: 1.5;
+}
+
+.lumina-profile-subtitle { margin: 22px 0 12px; font-size: 16px; }
+
+.lumina-profile-colors {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.lumina-profile-color {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 9px;
+  min-width: 0;
+  min-height: 48px;
+  padding: 9px 11px;
+  border-radius: 13px;
+  border: 1px solid var(--profile-border);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.lumina-profile-color.is-selected {
+  border: 2px solid var(--lumina-accent, #3984ff);
+  background: color-mix(in srgb, var(--lumina-accent, #3984ff) 12%, transparent);
+}
+
+.lumina-profile-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(128, 128, 128, .35);
+}
+
 .lumina-profile-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+
 .lumina-profile-row {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  padding: 15px 0;
+  min-height: 58px;
+  padding: 12px 0;
   border: 0;
-  border-top: 1px solid var(--lumina-border, #39334d);
-  text-align: left;
-  color: inherit;
+  border-bottom: 1px solid var(--profile-border);
   background: transparent;
+  color: inherit;
+  text-align: left;
   font: inherit;
+  cursor: pointer;
 }
-button.lumina-profile-row { cursor: pointer; }
-.lumina-profile-row strong, .lumina-profile-row small { display: block; }
-.lumina-profile-row small { margin-top: 5px; opacity: .68; line-height: 1.45; }
+
+.lumina-profile-row:last-child { border-bottom: 0; }
+.lumina-profile-row span:first-child { min-width: 0; }
+.lumina-profile-row strong { display: block; margin-bottom: 4px; }
+.lumina-profile-row small { display: block; opacity: .78; line-height: 1.45; overflow-wrap: anywhere; }
 .lumina-profile-static { cursor: default; }
-.lumina-profile-logout strong { color: #ff7777; }
-.lumina-profile-message { margin: 12px 2px; color: var(--lumina-accent, #3984ff); }
-.lumina-profile-note { font-size: 12px; line-height: 1.6; opacity: .65; padding: 0 3px; }
+.lumina-profile-logout { color: #e45c69; }
+.lumina-profile-message { font-weight: 650; overflow-wrap: anywhere; }
+.lumina-profile-note { font-size: 12px; line-height: 1.55; opacity: .72; overflow-wrap: anywhere; }
+
+.lumina-profile-page button:focus-visible,
+.lumina-profile-page input:focus-visible,
+.lumina-profile-page select:focus-visible {
+  outline: 3px solid var(--lumina-accent, #3984ff);
+  outline-offset: 3px;
+}
+
+@media (max-width: 380px) {
+  .lumina-profile-page { padding-left: 10px; padding-right: 10px; }
+  .lumina-profile-card, .lumina-profile-section { padding: 15px; }
+  .lumina-profile-colors { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lumina-profile-page * { transition: none !important; }
+}
