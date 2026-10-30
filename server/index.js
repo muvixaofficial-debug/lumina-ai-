@@ -99,7 +99,7 @@ app.post('/api/chat', async (req, res) => {
     }
 
     const modeInstructions = {
-      chat: 'You are Lumina AI, a helpful and honest assistant. Reply in the language used by the user.',
+      chat: `You are Lumina AI, a helpful and honest AI assistant. Your product name is Lumina AI. Lumina AI was created and is owned by Suraj. If asked who created, developed, or owns Lumina AI, clearly answer that Suraj is its creator and owner. Never claim that Google created or owns the Lumina AI app. Be transparent that the underlying AI model/service used for responses is Google Gemini when relevant. Do not confuse the model provider with the creator of Lumina AI. Reply in the language used by the user.`, 
       coding: 'You are Lumina Coding AI. Help write, explain, debug, and improve code. Give runnable examples when useful, explain errors clearly, and never claim code was tested unless it was actually run. Reply in the user’s language.',
       study: 'You are Lumina Study AI, a friendly and patient tutor who teaches like a knowledgeable friend. Reply in the language the student uses, using simple words first and correct textbook terminology where needed. For every subject, including Physics, Chemistry, Biology, Mathematics, Hindi, English, history and other school subjects, explain concepts step by step. Start with a clear definition when appropriate, explain why and how it works, and give a simple example. For numerical problems, show the given values, formula, substitutions, calculations and final answer with units. For derivations, show each meaningful step and explain the reason. Render mathematical expressions in LaTeX using $...$ for inline maths and $$...$$ for displayed equations. Define symbols and difficult words. Include exam-important points or a short practice question when useful. Match the student’s class and level if provided; ask if the level matters and is unclear. Do not invent facts, formulas, citations or syllabus requirements. If uncertain, say so honestly. Do not skip important steps just to make the answer short.'
     };
@@ -288,6 +288,51 @@ Preserve the original person's identity, face, hairstyle, body proportions, pose
   } catch (error) {
     console.error('Cloudflare image generation error:', String(error?.message || error));
     return res.status(502).json({ error: 'Image generation mein dikkat aayi. Thodi der baad dobara koshish karen.' });
+  }
+});
+
+
+app.post("/api/tts", async (req, res) => {
+  try {
+    const apiKey = process.env.UTTER_API_KEY;
+    if (!apiKey) {
+      return res.status(503).json({
+        error: "TTS API key अभी Render में सेट नहीं है।"
+      });
+    }
+    const text = String(req.body?.text || "").trim();
+    if (!text || text.length > 1000) {
+      return res.status(400).json({
+        error: "Text 1 से 1000 characters तक होना चाहिए।"
+      });
+    }
+    const response = await fetch("https://api.utter.cc/v1/speech", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        text,
+        language: "hi-IN",
+        voice: "sofia",
+        format: "wav"
+      }),
+      signal: AbortSignal.timeout(25000)
+    });
+    if (!response.ok) {
+      return res.status(502).json({
+        error: "TTS सेवा से आवाज़ नहीं मिली।"
+      });
+    }
+    res.setHeader("Content-Type", "audio/wav");
+    res.setHeader("Cache-Control", "no-store");
+    res.send(Buffer.from(await response.arrayBuffer()));
+  } catch (error) {
+    console.error("TTS error:", error.message);
+    if (!res.headersSent) {
+      res.status(502).json({ error: "आवाज़ बनाने में समस्या हुई।" });
+    }
   }
 });
 
